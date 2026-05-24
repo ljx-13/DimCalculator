@@ -1,10 +1,12 @@
 from typing import List, Tuple
+import logging
 import pint
 import math
 import json
 import re
 
 ureg = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+log = logging.getLogger(__name__)
 
 class DimCalculatorCore:
     """核心计算类，支持超时控制和错误诊断"""
@@ -58,6 +60,7 @@ class DimCalculatorCore:
                     result.append(exp[i:pos + sym_len])
                 i = pos + sym_len
             return ''.join(result)
+
         # 替换单位符号和常量
         for (name, dn, symbol, c) in self.units:
             exper = replace_if_surrounded_by_math(exper, symbol, name)
@@ -66,7 +69,7 @@ class DimCalculatorCore:
                 exper = replace_if_surrounded_by_math(exper, "_" + symbol, name)
             else:  # 数学常量
                 exper = replace_if_surrounded_by_math(exper, symbol, name)
-        # print("replaced:", exper)
+        log.debug("replaced: " + exper)
         # 把单位原子化，避免计算优先级错误
         new = []
         is_atom = False
@@ -82,7 +85,7 @@ class DimCalculatorCore:
                     new.append(")")
                 new.append(exper[i])
         exper = "".join(new)
-        # print(exper)
+        log.debug("add (): " + exper)
         def insert_mul(exp):
             """补全省略的乘号"""
             result = []
@@ -103,11 +106,17 @@ class DimCalculatorCore:
                             # print(exper[i])
                     else:
                         result.append(num_part)
+                elif exp[i] == ')':
+                    # 右括号后紧跟左括号，插入乘号
+                    result.append(exp[i])
+                    i += 1
+                    if i < n and exp[i] == '(':
+                        result.append('*')
                 else:
                     result.append(exp[i])
                     i += 1
             exp = "".join(result)
-            # print("tab *:", exp)
+            log.debug("tab *: " + exp)
             return exp
 
         exper = insert_mul(exper)
@@ -159,7 +168,9 @@ class DimCalculatorCore:
                 display_name = unit["display_name"]
                 common = unit["common"]
                 # 注册单位
-                self.ureg.define(f"{name} = {definition} = {symbol}")
+                if not hasattr(self.ureg, name):
+                    self.ureg.define(f"{name} = {definition} = {symbol}")
+                    # print(name)
                 units_list.append((name, display_name, symbol, common))
             # 导入合并单位
             preferred_unit_names = data.get("preferred_units", [])
@@ -167,8 +178,10 @@ class DimCalculatorCore:
             # print(ureg.default_preferred_units)
             return units_list
         except FileNotFoundError:
+            log.error("FileNotFoundError: " + filename)
             return []
         except Exception as e:
+            log.error(type(e).__name__ + ": " + str(e))
             return []
 
     def _load_consts(self, filename) -> list:
@@ -185,8 +198,10 @@ class DimCalculatorCore:
                 const_list.append((name, display_name, symbol, value))
             return const_list
         except FileNotFoundError:
+            log.error("FileNotFoundError: " + filename)
             return []
         except Exception as e:
+            log.error(type(e).__name__ + ": " + str(e))
             return []
 
     def _build_namespace(self):
@@ -381,18 +396,19 @@ class DimCalculatorCore:
         计算表达式
         :return: (结果字符串, 错误信息)
         """
-        # print("\norigin:", original_exper)
+        log.debug("========== DEBUG ==========")
+        log.debug("origin: " + original_exper)
         exper = self.processed(original_exper)
-        # print("final exper:", exper)
+        log.debug("final exper: " + exper)
         try:
             result = self.safe_eval(exper)
-            # print("original result:", result)
+            log.debug("original result: " + str(result))
             # 格式化输出
             if isinstance(result, pint.Quantity):
                 # 紧凑格式：5m 而不是 5 meter
                 try:
                     result_str = f"{round(result.magnitude, 12)}{result.units:~}".replace(" ", "")
-                    # print("格式化:", result_str)
+                    log.debug("format: " + result_str)
                 except:
                     result_str = str(result).replace(" ", "")
                 # 把1/X改成X^-1的格式
@@ -400,8 +416,7 @@ class DimCalculatorCore:
                 result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")
             else:
                 result_str = str(result)
-            # print("final result:", result_str)
-            result_str = self._format_scientific(result_str)#.replace("**", "^")
+            log.debug("final result: " + result_str)
         except Exception as e:
             # 诊断错误
             diagnosis = self.diagnose_error(e)
@@ -410,8 +425,7 @@ class DimCalculatorCore:
             # 记录历史
             self.history.append((original_exper, result_str))
             self.last_ans = result_str
-            # print("final result_:", result_str)
-            return result_str, None
+            return self._format_scientific(result_str), None
 
     def convert_unit(self, target_unit: str):
         """
