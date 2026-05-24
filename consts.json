@@ -1,0 +1,16 @@
+{
+    "consts": [
+        { "name": "pi", "display_name": "圆周率", "symbol": "π", "value": "3.141592653589793" },
+        { "name": "e", "display_name": "自然常数", "symbol": "e", "value": "2.718281828459045" },
+        { "name": "_g", "display_name": "重力加速度", "symbol": "g", "value": "9.8*m/s**2" },
+        { "name": "_c", "display_name": "光速", "symbol": "c", "value": "299792458*m/s" },
+        { "name": "_G", "display_name": "万有引力常数", "symbol": "G", "value": "6.67430e-11*m**3/kg/s**2" },
+        { "name": "_h", "display_name": "普朗克常数", "symbol": "h", "value": "6.62607015e-34*J*s" },
+        { "name": "_e_charge", "display_name": "元电荷", "symbol": "e", "value": "1.60217662e-19*C" },
+        { "name": "_m_e", "display_name": "电子质量", "symbol": "mₑ", "value": "9.1093837e-31*kg" },
+        { "name": "_m_p", "display_name": "质子质量", "symbol": "mₚ", "value": "1.6726219e-27*kg" },
+        { "name": "_m_n", "display_name": "中子质量", "symbol": "mₙ", "value": "1.6749275e-27*kg" },
+        { "name": "_N_A", "display_name": "阿伏伽德罗常数", "symbol": "N_A", "value": "6.02214076e23/mol" },
+        { "name": "_V_m", "display_name": "气体摩尔体积(标况)", "symbol": "Vₘ", "value": "0.022414*m**3/mol" }
+    ]
+}

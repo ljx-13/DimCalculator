@@ -1,0 +1,434 @@
+from typing import List, Tuple
+import pint
+import math
+import json
+import re
+
+ureg = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
+
+class DimCalculatorCore:
+    """核心计算类，支持超时控制和错误诊断"""
+    def __init__(self, units_file="units.json", constants_file="consts.json"):
+        self.ureg = ureg
+        self.__units = self._load_units(units_file)
+        self.__consts = self._load_consts(constants_file)
+        self.history = []
+        """(exper, result_str)"""
+        self.last_ans = "0"
+        self.namespace = self._build_namespace()
+
+    @property
+    def units(self) -> List[Tuple[str, str, str, bool]]:
+        """List[(英文名称, 显示名称, 符号, 是否常用)]"""
+        return self.__units
+
+    @property
+    def consts(self) -> List[Tuple[str, str, str, str]]:
+        """List[(英文名称, 显示名称, 符号, 值)]"""
+        return self.__consts
+
+    def processed(self, exper):
+        """处理输入"""
+        # 替换输入字符串中的部分字符
+        exper = (exper.replace("×", "*").replace("^", "**")
+                 .replace("÷", "/").replace(":", "/").replace("\\", "/")
+                 .replace("[", "(").replace("]", ")").replace("{", "(").replace("}", ")")
+                 .replace("√(", "sqrt(").replace("%", "/100")
+                 .replace("ans", self.last_ans).replace("π", str(self.consts[0][3])))
+
+        def replace_if_surrounded_by_math(exp, sym: str, name: str):
+            allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")
+            result = []
+            i = 0
+            n = len(exp)
+            sym_len = len(sym)
+            while i < n:
+                pos = exp.find(sym, i)
+                if pos == -1:
+                    result.append(exp[i:])
+                    break
+                before_char = exp[pos - 1] if pos > 0 else '^'
+                after_char = exp[pos + sym_len] if pos + sym_len < n else '$'
+                before_ok = (pos == 0) or (before_char in allowed)
+                after_ok = (pos + sym_len == n) or (after_char in allowed)
+                if before_ok and after_ok:
+                    result.append(exp[i:pos])
+                    result.append(name)
+                else:
+                    result.append(exp[i:pos + sym_len])
+                i = pos + sym_len
+            return ''.join(result)
+        # 替换单位符号和常量
+        for (name, dn, symbol, c) in self.units:
+            exper = replace_if_surrounded_by_math(exper, symbol, name)
+        for (name, dn, symbol, v) in self.consts:
+            if name.startswith("_"):  # 物理常量
+                exper = replace_if_surrounded_by_math(exper, "_" + symbol, name)
+            else:  # 数学常量
+                exper = replace_if_surrounded_by_math(exper, symbol, name)
+        # print("replaced:", exper)
+        # 把单位原子化，避免计算优先级错误
+        new = []
+        is_atom = False
+        for i in range(len(exper)):
+            if exper[i].isdigit() or exper[i] in "_." or exper[i].isalpha():
+                if not is_atom:
+                    is_atom = True
+                    new.append("(")
+                new.append(exper[i])
+            else:
+                if is_atom:
+                    is_atom = False
+                    new.append(")")
+                new.append(exper[i])
+        exper = "".join(new)
+        # print(exper)
+        def insert_mul(exp):
+            """补全省略的乘号"""
+            result = []
+            i = 0
+            n = len(exp)
+            while i < n:
+                if exp[i].isdigit() or exp[i] == '.':
+                    # 收集数字部分
+                    start = i
+                    while i < n and (exp[i].isdigit() or exp[i] == '.'):
+                        i += 1
+                    num_part = exp[start:i]
+                    if i < n and (exp[i].isalpha() or exp[i] == "_"):
+                        if i < n - 1 and exp[i] in "eE" and (exp[i + 1].isdigit() or exp[i + 1] in "+-"):  # 检查科学计数法
+                            result.append(num_part)
+                        else:
+                            result.append(num_part + '*')
+                            # print(exper[i])
+                    else:
+                        result.append(num_part)
+                else:
+                    result.append(exp[i])
+                    i += 1
+            exp = "".join(result)
+            # print("tab *:", exp)
+            return exp
+
+        exper = insert_mul(exper)
+        # 补全右括号
+        s9s0 = exper.count("(") - exper.count(")")
+        if s9s0 > 0:
+            exper += ")" * s9s0
+        return exper
+
+    def safe_eval(self, exper: str):
+        """
+        安全计算表达式，支持单位和数学函数。
+        :return: pint.Quantity或数值。
+        """
+        # 表达式安全检查（长度）
+        if len(exper) > 200:
+            raise ValueError("表达式过长（超过200字符）")
+        # 使用受限的 eval
+        try:
+            result = eval(exper, self.namespace)
+            # print(exper, type(result), self.namespace)
+            if isinstance(result, pint.Quantity):
+                try:
+                    # 合并单位
+                    result = result.to_preferred()
+                except:
+                    pass
+            return result
+        except pint.DimensionalityError:
+            raise
+        except NameError:
+            raise
+        except SyntaxError:
+            raise
+        except Exception as e:
+            raise ValueError(f"表达式错误: {e}")
+
+    def _load_units(self, filename) -> list:
+        """导入单位，自动注册，返回中文名。"""
+        # self.auto_preferred_units = []
+        try:
+            with open(filename, 'r', encoding="utf-8") as f:
+                data = json.load(f)
+            units_list = []
+            for unit in data.get("units", []):
+                name = unit["name"]
+                symbol = unit["symbol"]
+                definition = unit["definition"]
+                display_name = unit["display_name"]
+                common = unit["common"]
+                # 注册单位
+                self.ureg.define(f"{name} = {definition} = {symbol}")
+                units_list.append((name, display_name, symbol, common))
+            # 导入合并单位
+            preferred_unit_names = data.get("preferred_units", [])
+            self.ureg.default_preferred_units = [self.ureg.Unit(name) for name in preferred_unit_names]
+            # print(ureg.default_preferred_units)
+            return units_list
+        except FileNotFoundError:
+            return []
+        except Exception as e:
+            return []
+
+    def _load_consts(self, filename) -> list:
+        """导入常量，返回常量字典"""
+        try:
+            with open(filename, 'r', encoding="utf-8") as f:
+                data = json.load(f)
+            const_list = []
+            for unit in data.get("consts", []):
+                name = unit["name"]
+                display_name = unit.get("display_name", name)
+                symbol = unit["symbol"]
+                value = unit["value"]
+                const_list.append((name, display_name, symbol, value))
+            return const_list
+        except FileNotFoundError:
+            return []
+        except Exception as e:
+            return []
+
+    def _build_namespace(self):
+        namespace = {}
+        # 所有注册的单位
+        for name, dn, s, c in self.units:
+            try:
+                namespace[name] = getattr(self.ureg, name)
+            except AttributeError:
+                pass
+        # 基本单位（保障）
+        basic_units = {
+            'm': self.ureg.m, 'kg': self.ureg.kg, 's': self.ureg.s, 'A': self.ureg.A,
+            'K': self.ureg.K, 'mol': self.ureg.mol, 'cd': self.ureg.cd, 'g': self.ureg.g,
+            'cm': self.ureg.cm, 'km': self.ureg.km, 'mm': self.ureg.mm,
+            'N': self.ureg.N, 'J': self.ureg.J, 'W': self.ureg.W, 'Pa': self.ureg.Pa,
+            'V': self.ureg.V, 'ohm': self.ureg.ohm, 'Hz': self.ureg.Hz,
+            'rad': self.ureg.radian, 'deg': self.ureg.degree,
+        }
+        namespace.update(basic_units)
+        # 常数
+        for name, _, _, value_str in self.consts:
+            namespace[name] = ureg.parse_expression(value_str)
+        # 数学常数和函数
+        def trigonometric(f, x):
+            """三角函数"""
+            input_x = x
+            if isinstance(x, pint.Quantity):
+                if x.units == ureg.degree:
+                    x = x.to(ureg.radian).magnitude
+                elif x.units == ureg.radian:
+                    x = x.magnitude
+                else:
+                    raise TypeError(f"三角函数要求角度（deg/rad），但输入了 {x.units}")
+            result = f(x)
+            # 防止tan(pi/2)等定义域之外的情况
+            if abs(result) > 1e15:
+                raise ValueError(f"tan({input_x}) 无定义：正切函数在 π/2 + kπ 处趋于无穷")
+            return round(result, 12)
+        def _abs(x):
+            if isinstance(x, pint.Quantity):
+                return abs(x.magnitude)
+            return abs(x)
+        def log(x, base):
+            """默认的log以e为底，为避免歧义去除该默认值"""
+            return math.log(x, base)
+        namespace['pi'] = math.pi
+        namespace['e'] = math.e
+        namespace['sin'] = lambda x: trigonometric(math.sin, x)
+        namespace['cos'] = lambda x: trigonometric(math.cos, x)
+        namespace['tan'] = lambda x: trigonometric(math.tan, x)
+        namespace['sqrt'] = math.sqrt
+        namespace['abs'] = _abs
+        namespace['log'] = log
+        namespace['lg'] = math.log10
+        return namespace
+
+    def diagnose_error(self, error: Exception) -> str:  # todo: 角度弧度
+        """根据错误类型生成教学提示，支持量纲分析、未定义名称、语法错误等"""
+        err_type = type(error).__name__
+        err_msg = str(error)
+        # print(err_type, err_msg.lower())
+        # 1. 量纲不匹配（DimensionalityError）
+        if hasattr(error, 'units1') and hasattr(error, 'units2'):
+            u1 = str(error.units1).lower()
+            u2 = str(error.units2).lower()
+
+            # 辅助函数：判断单位是否属于某物理量
+            def is_length(u):
+                return 'meter' in u or u in ('m', 'cm', 'km', 'mm')
+
+            def is_time(u):
+                return 'second' in u or u in ('s', 'min', 'h')
+
+            def is_mass(u):
+                return 'kilogram' in u or u in ('kg', 'g', 'mg')
+
+            def is_energy(u):
+                return 'joule' in u or u in ('j', 'joule')
+
+            def is_power(u):
+                return 'watt' in u or u in ('w', 'watt')
+
+            def is_voltage(u):
+                return 'volt' in u or u in ('v', 'volt')
+
+            def is_current(u):
+                return 'ampere' in u or u in ('a', 'ampere')
+
+            if (is_length(u1) and is_time(u2)) or (is_length(u2) and is_time(u1)):
+                return (
+                    f"❌ 单位错误：长度（米）和时间（秒）不能直接相加或相减。\n"
+                    f"💡 提示：您是否想计算速度？请尝试 长度 / 时间，例如 `10*m / 5*s`。"
+                )
+            elif (is_mass(u1) and is_length(u2)) or (is_mass(u2) and is_length(u1)):
+                return (
+                    f"❌ 单位错误：质量（千克）和长度（米）不能直接运算。\n"
+                    f"💡 提示：您是否想计算力？力 = 质量 × 加速度，例如 `10*kg * 9.8*m/s^2`。"
+                )
+            elif (is_energy(u1) and is_time(u2)) or (is_energy(u2) and is_time(u1)):
+                return (
+                    f"❌ 单位错误：能量（焦耳）和时间（秒）不能直接相加。\n"
+                    f"💡 提示：功率 = 能量 / 时间，单位是瓦特（W），例如 `100*J / 10*s`。"
+                )
+            elif (is_voltage(u1) and is_current(u2)) or (is_voltage(u2) and is_current(u1)):
+                return (
+                    f"❌ 单位错误：电压（伏特）和电流（安培）不能直接相加。\n"
+                    f"💡 提示：电阻 = 电压 / 电流，单位是欧姆（Ω），例如 `10*V / 2*A`。"
+                )
+            else:
+                return (
+                    f"❌ 单位不匹配：`{error.units1}` 与 `{error.units2}` 不属于同一物理量纲。\n"
+                    f"💡 提示：请检查表达式中的单位是否一致。例如长度只能与长度相加，速度不能与时间相加等。"
+                )
+
+        # 2. 未定义的名称（NameError 或 UndefinedUnitError）
+        if isinstance(error, NameError) or ('UndefinedUnitError' in err_type):
+            import re
+            match = re.search(r"'([^']+)'", err_msg)
+            if match:
+                undefined = match.group(1)
+                suggestions = {
+                    'm': '米（正确写法：m）',
+                    'kg': '千克（正确写法：kg）',
+                    's': '秒（正确写法：s）',
+                    'N': '牛顿（正确写法：N）',
+                    'J': '焦耳（正确写法：J）',
+                    'W': '瓦特（正确写法：W）',
+                    'Pa': '帕斯卡（正确写法：Pa）',
+                    'V': '伏特（正确写法：V）',
+                    'A': '安培（正确写法：A）',
+                    'Ω': '欧姆（正确写法：ohm 或 Ω）',
+                    'C': '库仑（正确写法：C）',
+                    'F': '法拉（正确写法：F）',
+                    'H': '亨利（正确写法：H）',
+                    'T': '特斯拉（正确写法：T）',
+                    'Hz': '赫兹（正确写法：Hz）',
+                    'rad': '弧度（正确写法：rad）',
+                    'deg': '度（正确写法：deg）',
+                    '_g': '重力加速度（正确写法：_g，或点击常数面板的 g 按钮）',
+                    '_c': '光速（正确写法：_c）',
+                    'pi': '圆周率（正确写法：pi，或使用 π 符号）',
+                    'e': '自然常数（正确写法：e）',
+                }
+                if undefined in suggestions:
+                    return f"❌ 未定义的名称：`{undefined}`\n💡 提示：{suggestions[undefined]}"
+                else:
+                    return (
+                        f"❌ 未定义的名称：`{undefined}`\n"
+                        f"💡 提示：请检查是否使用了正确的单位（m, kg, s, N, J...）或物理常数（_g, _c, _pi...）。"
+                    )
+            else:
+                return f"❌ 计算错误：{err_msg}\n💡 提示：请检查是否使用了未定义的变量或单位。"
+
+        # 3. 语法错误（SyntaxError）
+        if isinstance(error, SyntaxError):
+            return (
+                f"❌ 表达式语法错误：{err_msg}\n"
+                f"💡 提示：请检查括号是否匹配、运算符是否正确（例如不要连续两个运算符 `++`），或是否使用了不支持的字符。"
+            )
+
+        # 4. 其他异常（如 ZeroDivisionError, OverflowError 等）
+        if isinstance(error, ZeroDivisionError):
+            return "❌ 除零错误：表达式分母为零。\n💡 提示：请检查除数是否可能为零。"
+        if isinstance(error, OverflowError):
+            return "❌ 数值溢出：计算结果过大或过小。\n💡 提示：请简化表达式或使用科学计数法。"
+
+        # 5. 默认提示
+        return f"❌ 计算错误：{err_msg}\n💡 提示：请检查表达式语法、单位是否正确，或简化表达式后重试。"
+
+    def _format_scientific(self, result_str_: str) -> str:
+        """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
+        import re
+        SUPERSCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
+                       '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', }
+        # 1. 处理 1.234e+15 这种
+        result_str_ = re.sub(
+            r'(\d+\.?\d*)[eE]\+?(-?\d+)',
+            lambda m: f"{m.group(1)}×10{''.join(SUPERSCRIPT.get(c, c) for c in m.group(2))}",
+            result_str_
+        )
+        # 2. 处理 ** 指数（只处理紧跟在数字/括号/单位后面的 **）
+        result_str_ = re.sub(
+            r'\*\*(-?\d+)',
+            lambda m: ''.join(SUPERSCRIPT.get(c, c) for c in m.group(1)),
+            result_str_
+        )
+        return result_str_.replace("deg", "°").replace("*", "·")
+
+    def evaluate(self, original_exper: str):
+        """
+        计算表达式
+        :return: (结果字符串, 错误信息)
+        """
+        # print("\norigin:", original_exper)
+        exper = self.processed(original_exper)
+        # print("final exper:", exper)
+        try:
+            result = self.safe_eval(exper)
+            # print("original result:", result)
+            # 格式化输出
+            if isinstance(result, pint.Quantity):
+                # 紧凑格式：5m 而不是 5 meter
+                try:
+                    result_str = f"{round(result.magnitude, 12)}{result.units:~}".replace(" ", "")
+                    # print("格式化:", result_str)
+                except:
+                    result_str = str(result).replace(" ", "")
+                # 把1/X改成X^-1的格式
+                result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
+                result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")
+            else:
+                result_str = str(result)
+            # print("final result:", result_str)
+            result_str = self._format_scientific(result_str)#.replace("**", "^")
+        except Exception as e:
+            # 诊断错误
+            diagnosis = self.diagnose_error(e)
+            return None, diagnosis
+        else:
+            # 记录历史
+            self.history.append((original_exper, result_str))
+            self.last_ans = result_str
+            # print("final result_:", result_str)
+            return result_str, None
+
+    def convert_unit(self, target_unit: str):
+        """
+        将上一次计算结果转换为目标单位
+        :return: (转换结果字符串, 错误信息)
+        """
+        try:
+            # 解析 last_ans 为 pint.Quantity
+            q = self.ureg.parse_expression(self.last_ans)
+            # 转换为目标单位
+            converted = q.to(target_unit)
+            # 格式化输出
+            result_str = f"{converted.magnitude}{converted.units:~}".replace(" ", "")
+            return self._format_scientific(result_str), None
+        except pint.DimensionalityError:
+            return None, f"❌ 单位不匹配：无法将 {self.last_ans} 转换为 {target_unit}"
+        except pint.UndefinedUnitError:
+            return None, f"❌ 未定义的单位：'{target_unit}'"
+        except Exception as e:
+            return None, f"转换失败: {e}"
