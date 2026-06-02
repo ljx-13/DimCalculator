@@ -28,12 +28,16 @@ if not os.path.exists(plugin_path):
 
 # 下面正常导入PyQt5
 from PyQt5.QtWidgets import QApplication, QMessageBox
+# from PyQt5.QtGui import QIcon
 from gui import DimCalculatorGUI
+# import ctypes
 
 if __name__ == '__main__':
     try:
         # raise SyntaxError("111")
         app = QApplication(sys.argv)
+        # ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dimcalculator.ljx.v1.0')  # 设置窗口ID，确保任务栏图标正常显示
+        # app.setWindowIcon(QIcon("icon.ico"))
         window = DimCalculatorGUI()  # todo: try
         window.show()
         sys.exit(app.exec_())
