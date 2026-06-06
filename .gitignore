@@ -5,3 +5,4 @@ build/
 dist/
 DimCalculator.spec
 *.log
+*.prof
