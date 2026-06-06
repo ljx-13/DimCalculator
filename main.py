@@ -1,3 +1,11 @@
+DEBUG = False
+if DEBUG:
+    import cProfile
+    import pstats
+    from pstats import SortKey
+    profiler = cProfile.Profile()
+    profiler.enable()
+
 import sys
 import os
 import logging
@@ -27,19 +35,42 @@ if not os.path.exists(plugin_path):
     os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 
 # 下面正常导入PyQt5
-from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMessageBox, QSplashScreen
+from PyQt5.QtCore import Qt, QTimer
 # from PyQt5.QtGui import QIcon
-from gui import DimCalculatorGUI
 # import ctypes
 
 if __name__ == '__main__':
     try:
         # raise SyntaxError("111")
         app = QApplication(sys.argv)
-        # ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dimcalculator.ljx.v1.0')  # 设置窗口ID，确保任务栏图标正常显示
-        # app.setWindowIcon(QIcon("icon.ico"))
-        window = DimCalculatorGUI()  # todo: try
-        window.show()
+        # 创建启动画面
+        from PyQt5.QtGui import QPainter, QColor, QPixmap, QFont, QPixmap
+        splash_pixmap = QPixmap(400, 300)
+        splash_pixmap.fill(Qt.white)
+        painter = QPainter(splash_pixmap)
+        painter.setPen(QColor(0, 120, 215))
+        painter.setFont(QFont("Microsoft YaHei", 24))
+        painter.drawText(splash_pixmap.rect(), Qt.AlignCenter, "DimCalculator")
+        painter.end()
+        splash = QSplashScreen(splash_pixmap)
+        splash.show()
+        # 延迟加载主窗口
+        def load_main_window():
+            from gui import DimCalculatorGUI
+            window = DimCalculatorGUI()
+            window.show()
+            splash.finish(window)
+        QTimer.singleShot(0, load_main_window)
+        # window = DimCalculatorGUI()
+        # window.show()
+        if DEBUG:
+            profiler.disable()
+            profiler.dump_stats('startup_profile.prof')
+            # 打印前20个最耗时的函数
+            stats = pstats.Stats(profiler)
+            stats.sort_stats(SortKey.CUMULATIVE)
+            stats.print_stats(20)
         sys.exit(app.exec_())
     except Exception as e:
         logging.critical(type(e).__name__ + ": " + str(e))

@@ -1,6 +1,9 @@
 from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QPushButton, \
+    QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog
+# from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
+
 from core import DimCalculatorCore
 
 class DimCalculatorGUI(QMainWindow):
@@ -203,13 +206,12 @@ class DimCalculatorGUI(QMainWindow):
         hist_btn.clicked.connect(self.show_history)
         main_layout.addWidget(hist_btn)
 
-        self.resize(850, 650)
+        self.resize(700, 700)
 
     def handle_unit_click(self, symbol):
         if self.is_convert_mode:
             # 处于转换模式：执行单位转换
             if self.convert_source_value:
-                # 调用core的单位转换方法（需确保core有此方法，入参：源值、目标单位）
                 converted_result, error = self.core.convert_unit(symbol)
                 if error:
                     self.result_label.setText("转换错误")
