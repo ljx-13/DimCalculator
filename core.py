@@ -408,7 +408,8 @@ class DimCalculatorCore:
         # 5. 默认提示
         return f"❌ 计算错误：{err_msg}\n💡 提示：请检查表达式语法、单位是否正确，或简化表达式后重试。"
 
-    def _format_scientific(self, result_str_: str) -> str:  # fixme: **0.5
+    @staticmethod
+    def _format_scientific(result_str_: str) -> str:  # fixme: **0.5
         """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
         import re
         SUPERSCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
@@ -427,6 +428,21 @@ class DimCalculatorCore:
         )
         return result_str_.replace("deg", "°").replace("*", "·")
 
+    @staticmethod
+    def _round_magnitude(value):
+        if isinstance(value, float):
+            # 极小值（绝对值小于 1e-10）直接用科学计数法
+            if 0 < abs(value) < 1e-10:
+                return f"{value:.6e}".rstrip('0').rstrip('.')
+            rounded = round(value, 12)
+            if rounded.is_integer():
+                return str(int(rounded))
+            result = f"{rounded:.12g}"
+            if '.' in result:
+                result = result.rstrip('0').rstrip('.')
+            return result
+        return str(value)
+
     def evaluate(self, original_exper: str):
         """
         计算表达式
@@ -443,7 +459,10 @@ class DimCalculatorCore:
             if isinstance(result, pint.Quantity):
                 # 紧凑格式：5m 而不是 5 meter
                 try:
-                    result_str = f"{round(result.magnitude, 12)}{result.units:~}".replace(" ", "")
+                    # 智能格式化数值
+                    mag = result.magnitude
+                    mag_str = self._round_magnitude(mag)
+                    result_str = f"{mag_str}{result.units:~}".replace(" ", "")
                     loger.debug("format: " + result_str)
                 except:
                     result_str = str(result).replace(" ", "")
@@ -451,7 +470,7 @@ class DimCalculatorCore:
                 result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
                 result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")
             else:
-                result_str = str(result)
+                result_str = str(self._round_magnitude(result))
             loger.debug("final result: " + result_str)  # todo: float -> int
         except Exception as e:
             # 诊断错误
