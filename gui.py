@@ -175,7 +175,7 @@ class DimCalculatorGUI(QMainWindow):
         func_widget = QWidget()
         func_layout = QGridLayout(func_widget)
         functions = {"sin": "正弦函数", "cos": "余弦函数", "tan": "正切函数",
-                     "log": "log(真数, 底数)", "lg": "常用对数", "ln": "自然对数",
+                     "loger": "loger(真数, 底数)", "lg": "常用对数", "ln": "自然对数",
                      "abs": "绝对值"}
         row, col = 0, 0
         for func, tip in functions.items():

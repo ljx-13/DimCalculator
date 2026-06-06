@@ -1,4 +1,4 @@
-DEBUG = False
+DEBUG = True
 if DEBUG:
     import cProfile
     import pstats
@@ -13,9 +13,9 @@ from logging.handlers import RotatingFileHandler
 from PyQt5 import __file__ as pyqt5_file
 
 handler = RotatingFileHandler("DimCalculator.log", maxBytes=1204*1024, backupCount=3)
-logging.basicConfig(level=logging.ERROR,
+logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    handlers=[handler],
+                    # handlers=[handler],
                     )
 
 # 【本地运行 + 打包后 双兼容】
@@ -80,7 +80,7 @@ if __name__ == '__main__':
             if app is None:
                 # 创建临时实例用于弹窗
                 temp_app = QApplication(sys.argv)
-                QMessageBox.critical(None, "程序崩溃", "错误日志已保存至 DimCalculator.log")
+                QMessageBox.critical(None, "程序崩溃", "错误日志已保存至 DimCalculator.loger")
                 temp_app.quit()
         except:
             pass

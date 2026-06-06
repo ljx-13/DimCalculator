@@ -6,7 +6,7 @@ import json
 import re
 
 ureg = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
-log = logging.getLogger(__name__)
+loger = logging.getLogger(__name__)
 
 class DimCalculatorCore:
     """核心计算类，支持超时控制和错误诊断"""
@@ -69,23 +69,52 @@ class DimCalculatorCore:
                 exper = replace_if_surrounded_by_math(exper, "_" + symbol, name)
             else:  # 数学常量
                 exper = replace_if_surrounded_by_math(exper, symbol, name)
-        log.debug("replaced: " + exper)
-        # 把单位原子化，避免计算优先级错误
-        new = []
-        is_atom = False
-        for i in range(len(exper)):
-            if exper[i].isdigit() or exper[i] in "_." or exper[i].isalpha():
-                if not is_atom:
-                    is_atom = True
-                    new.append("(")
-                new.append(exper[i])
-            else:
-                if is_atom:
-                    is_atom = False
-                    new.append(")")
-                new.append(exper[i])
-        exper = "".join(new)
-        log.debug("add (): " + exper)
+        loger.debug("replaced: " + exper)
+
+        def atomize_units(exp) -> str:
+            """把单位原子化，如 5V/3A -> (5V)/(3A)，防止计算优先级错误"""
+            # 原子化：数字 + 字母（可能带数字后缀，如 m2, m3） fixme: 复合单位如kg/mol
+            new = []
+            i = 0
+            n = len(exp)
+            while i < n:
+                ch = exp[i]
+                if ch.isdigit() or ch == '.':
+                    start = i
+                    # 收集数字（包括科学计数法）
+                    while i < n and (exp[i].isdigit() or exp[i] == '.'):
+                        i += 1
+                    if i < n and exp[i] in 'eE':
+                        i += 1
+                        if i < n and exp[i] in '+-':
+                            i += 1
+                        while i < n and exp[i].isdigit():
+                            i += 1
+                    num_part = exp[start:i]
+
+                    # 检查后面是否跟字母（单位）
+                    if i < n and (exp[i].isalpha() or exp[i] == '_'):
+                        ident_start = i
+                        while i < n and (exp[i].isalpha() or exp[i] == '_'):
+                            i += 1
+                        # 允许字母后面跟数字（如 m2, m3）
+                        while i < n and exp[i].isdigit():
+                            i += 1
+                        ident = exp[ident_start:i]  # 包含可能的数字后缀
+
+                        # 原子化
+                        new.append('(' + num_part + ident + ')')
+                    else:
+                        new.append(num_part)
+                else:
+                    new.append(ch)
+                    i += 1
+            exp = ''.join(new)
+            return exp
+
+        exper = atomize_units(exper)
+        loger.debug("atomized: " + exper)
+
         def insert_mul(exp):
             """补全省略的乘号"""
             result = []
@@ -116,10 +145,10 @@ class DimCalculatorCore:
                     result.append(exp[i])
                     i += 1
             exp = "".join(result)
-            log.debug("tab *: " + exp)
+            loger.debug("tab *: " + exp)
             return exp
-
         exper = insert_mul(exper)
+
         # 补全右括号
         s9s0 = exper.count("(") - exper.count(")")
         if s9s0 > 0:
@@ -178,10 +207,10 @@ class DimCalculatorCore:
             # print(ureg.default_preferred_units)
             return units_list
         except FileNotFoundError:
-            log.error("FileNotFoundError: " + filename)
+            loger.error("FileNotFoundError: " + filename)
             return []
         except Exception as e:
-            log.error(type(e).__name__ + ": " + str(e))
+            loger.error(type(e).__name__ + ": " + str(e))
             return []
 
     def _load_consts(self, filename) -> list:
@@ -198,10 +227,10 @@ class DimCalculatorCore:
                 const_list.append((name, display_name, symbol, value))
             return const_list
         except FileNotFoundError:
-            log.error("FileNotFoundError: " + filename)
+            loger.error("FileNotFoundError: " + filename)
             return []
         except Exception as e:
-            log.error(type(e).__name__ + ": " + str(e))
+            loger.error(type(e).__name__ + ": " + str(e))
             return []
 
     def _build_namespace(self):
@@ -248,14 +277,21 @@ class DimCalculatorCore:
         def log(x, base):
             """默认的log以e为底，为避免歧义去除该默认值"""
             return math.log(x, base)
+        def sqrt(x):
+            if isinstance(x, pint.Quantity):
+                return math.sqrt(x.magnitude) * x.units ** 0.5
+            elif isinstance(x, pint.Unit):
+                return x ** 0.5
+            return math.sqrt(x)
+
         namespace['pi'] = math.pi
         namespace['e'] = math.e
         namespace['sin'] = lambda x: trigonometric(math.sin, x)
         namespace['cos'] = lambda x: trigonometric(math.cos, x)
         namespace['tan'] = lambda x: trigonometric(math.tan, x)
-        namespace['sqrt'] = math.sqrt
+        namespace['sqrt'] = sqrt
         namespace['abs'] = _abs
-        namespace['log'] = log
+        namespace['loger'] = log
         namespace['lg'] = math.log10
         return namespace
 
@@ -372,7 +408,7 @@ class DimCalculatorCore:
         # 5. 默认提示
         return f"❌ 计算错误：{err_msg}\n💡 提示：请检查表达式语法、单位是否正确，或简化表达式后重试。"
 
-    def _format_scientific(self, result_str_: str) -> str:
+    def _format_scientific(self, result_str_: str) -> str:  # fixme: **0.5
         """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
         import re
         SUPERSCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
@@ -396,19 +432,19 @@ class DimCalculatorCore:
         计算表达式
         :return: (结果字符串, 错误信息)
         """
-        log.debug("========== DEBUG ==========")
-        log.debug("origin: " + original_exper)
+        loger.debug("========== DEBUG ==========")
+        loger.debug("origin: " + original_exper)
         exper = self.processed(original_exper)
-        log.debug("final exper: " + exper)
+        loger.debug("final exper: " + exper)
         try:
             result = self.safe_eval(exper)
-            log.debug("original result: " + str(result))
+            loger.debug("original result: " + str(result))
             # 格式化输出
             if isinstance(result, pint.Quantity):
                 # 紧凑格式：5m 而不是 5 meter
                 try:
                     result_str = f"{round(result.magnitude, 12)}{result.units:~}".replace(" ", "")
-                    log.debug("format: " + result_str)
+                    loger.debug("format: " + result_str)
                 except:
                     result_str = str(result).replace(" ", "")
                 # 把1/X改成X^-1的格式
@@ -416,7 +452,7 @@ class DimCalculatorCore:
                 result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")
             else:
                 result_str = str(result)
-            log.debug("final result: " + result_str)
+            loger.debug("final result: " + result_str)  # todo: float -> int
         except Exception as e:
             # 诊断错误
             diagnosis = self.diagnose_error(e)

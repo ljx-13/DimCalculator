@@ -1,7 +1,7 @@
 # DimCalculator - 智能量纲计算器
 
 **@ author: ljx-13**
-**@ version: 0.0.2**
+**@ version: 0.1.0**
 
 ## 项目简介
 
@@ -31,6 +31,7 @@
 ### 环境要求
 
 - Python 3.12 或更高版本
+- Windows 10 及以上
 
 ### 运行步骤
 

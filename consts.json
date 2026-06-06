@@ -11,6 +11,11 @@
         { "name": "_m_p", "display_name": "质子质量", "symbol": "mₚ", "value": "1.6726219e-27*kg" },
         { "name": "_m_n", "display_name": "中子质量", "symbol": "mₙ", "value": "1.6749275e-27*kg" },
         { "name": "_N_A", "display_name": "阿伏伽德罗常数", "symbol": "N_A", "value": "6.02214076e23/mol" },
-        { "name": "_V_m", "display_name": "气体摩尔体积(标况)", "symbol": "Vₘ", "value": "0.022414*m**3/mol" }
+        { "name": "_V_m", "display_name": "气体摩尔体积(标况)", "symbol": "Vₘ", "value": "0.022414*m**3/mol" },
+        { "name": "_epsilon_0", "display_name": "真空介电常数", "symbol": "ε₀", "value": "8.8541878128e-12*F/m" },
+        { "name": "_mu_0", "display_name": "真空磁导率", "symbol": "μ₀", "value": "1.25663706212e-6*N/A**2" },
+        { "name": "_k_B", "display_name": "玻尔兹曼常数", "symbol": "k", "value": "1.380649e-23*J/K" },
+        { "name": "_R", "display_name": "理想气体常数", "symbol": "R", "value": "8.314462618*J/mol/K" },
+        { "name": "_F", "display_name": "法拉第常数", "symbol": "F", "value": "96485.33212*C/mol" }
     ]
 }
