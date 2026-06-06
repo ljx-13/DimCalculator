@@ -291,7 +291,7 @@ class DimCalculatorCore:
         namespace['tan'] = lambda x: trigonometric(math.tan, x)
         namespace['sqrt'] = sqrt
         namespace['abs'] = _abs
-        namespace['loger'] = log
+        namespace['log'] = log
         namespace['lg'] = math.log10
         return namespace
 
@@ -409,7 +409,7 @@ class DimCalculatorCore:
         return f"❌ 计算错误：{err_msg}\n💡 提示：请检查表达式语法、单位是否正确，或简化表达式后重试。"
 
     @staticmethod
-    def _format_scientific(result_str_: str) -> str:  # fixme: **0.5
+    def _format_scientific(result_str_: str) -> str:  # fixme: **0.5  **-06(mu0)
         """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
         import re
         SUPERSCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
@@ -431,8 +431,7 @@ class DimCalculatorCore:
     @staticmethod
     def _round_magnitude(value):
         if isinstance(value, float):
-            # 极小值（绝对值小于 1e-10）直接用科学计数法
-            if 0 < abs(value) < 1e-10:
+            if 0 < abs(value) < 1e-10 or abs(value) > 1e10:
                 return f"{value:.6e}".rstrip('0').rstrip('.')
             rounded = round(value, 12)
             if rounded.is_integer():
@@ -448,6 +447,7 @@ class DimCalculatorCore:
         计算表达式
         :return: (结果字符串, 错误信息)
         """
+        # raise SyntaxError
         loger.debug("========== DEBUG ==========")
         loger.debug("origin: " + original_exper)
         exper = self.processed(original_exper)

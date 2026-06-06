@@ -1,4 +1,4 @@
-DEBUG = True
+DEBUG = False
 if DEBUG:
     import cProfile
     import pstats
@@ -9,13 +9,14 @@ if DEBUG:
 import sys
 import os
 import logging
+import traceback
 from logging.handlers import RotatingFileHandler
 from PyQt5 import __file__ as pyqt5_file
 
 handler = RotatingFileHandler("DimCalculator.log", maxBytes=1204*1024, backupCount=3)
 logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    # handlers=[handler],
+                    handlers=[handler],
                     )
 
 # 【本地运行 + 打包后 双兼容】
@@ -40,10 +41,21 @@ from PyQt5.QtCore import Qt, QTimer
 # from PyQt5.QtGui import QIcon
 # import ctypes
 
+class MyApplication(QApplication):
+    def notify(self, receiver, event):
+        """重写 notify 方法，捕获所有事件中的异常"""
+        try:
+            return super().notify(receiver, event)
+        except Exception as e:
+            error_msg = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+            logging.critical(error_msg)
+            QMessageBox.critical(None, "程序错误", "错误日志已保存至 DimCalculator.log")
+            return False
+
 if __name__ == '__main__':
     try:
-        # raise SyntaxError("111")
-        app = QApplication(sys.argv)
+        # raise SyntaxError
+        app = MyApplication(sys.argv)
         # 创建启动画面
         from PyQt5.QtGui import QPainter, QColor, QPixmap, QFont, QPixmap
         splash_pixmap = QPixmap(400, 300)
@@ -73,14 +85,14 @@ if __name__ == '__main__':
             stats.print_stats(20)
         sys.exit(app.exec_())
     except Exception as e:
-        logging.critical(type(e).__name__ + ": " + str(e))
+        logging.critical(''.join(traceback.format_exception(type(e), e, e.__traceback__)))
         try:
             # 检查是否已有 QApplication 实例
             app = QApplication.instance()
             if app is None:
                 # 创建临时实例用于弹窗
                 temp_app = QApplication(sys.argv)
-                QMessageBox.critical(None, "程序崩溃", "错误日志已保存至 DimCalculator.loger")
+                QMessageBox.critical(None, "程序崩溃", "错误日志已保存至 DimCalculator.log")
                 temp_app.quit()
         except:
             pass

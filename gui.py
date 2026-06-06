@@ -1,3 +1,7 @@
+import traceback
+import functools
+import logging
+
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QPushButton, \
     QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog
@@ -6,17 +10,34 @@ from PyQt5.QtCore import Qt
 
 from core import DimCalculatorCore
 
+def catch_exceptions(msg=""):
+    """捕获函数中的异常，弹出错误窗口并记录日志"""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                error_msg = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+                logging.critical(error_msg)
+                QMessageBox.critical(None, "程序崩溃", msg + "错误日志已保存至 DimCalculator.log")
+                return None
+        return wrapper
+    return decorator
+
 class DimCalculatorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.core = DimCalculatorCore()
         self.is_convert_mode = False  # 标记是否处于单位转换模式
-        self.convert_source_value = None  # 存储待转换的原始结果
+        self.convert_source_value = None  # 存储待转换的原始结果  # fixme
         self.initUI()
 
+    @catch_exceptions("初始化窗口时崩溃\n")
     def initUI(self):  # todo: 欢迎
         self.setWindowTitle("DimCalculator - 智能量纲计算器")
         self.setMinimumSize(700, 700)
+        # raise SyntaxError
         self.setMaximumWidth(1000)
         self.setBaseSize(700, 700)
         self.setWindowIcon(QIcon("icon.ico"))
@@ -175,7 +196,7 @@ class DimCalculatorGUI(QMainWindow):
         func_widget = QWidget()
         func_layout = QGridLayout(func_widget)
         functions = {"sin": "正弦函数", "cos": "余弦函数", "tan": "正切函数",
-                     "loger": "loger(真数, 底数)", "lg": "常用对数", "ln": "自然对数",
+                     "log": "log(真数, 底数)", "lg": "常用对数", "ln": "自然对数",
                      "abs": "绝对值"}
         row, col = 0, 0
         for func, tip in functions.items():
@@ -208,6 +229,7 @@ class DimCalculatorGUI(QMainWindow):
 
         self.resize(700, 700)
 
+    @catch_exceptions("处理单位输入时崩溃\n")
     def handle_unit_click(self, symbol):
         if self.is_convert_mode:
             # 处于转换模式：执行单位转换
@@ -230,7 +252,8 @@ class DimCalculatorGUI(QMainWindow):
             # 非转换模式：正常插入单位符号
             self.expr_edit.insert(symbol)
 
-    def on_button_clicked(self):
+    @catch_exceptions("处理按钮事件时崩溃\n")
+    def on_button_clicked(self, checked=False):
         btn = self.sender()
         text = btn.text()
         match text:
@@ -267,6 +290,7 @@ class DimCalculatorGUI(QMainWindow):
             case t:
                 self.handle_unit_click(t)
 
+    @catch_exceptions("处理计算时崩溃\n")
     def calculate(self):
         expr = self.expr_edit.text()
         if not expr.strip():
@@ -281,7 +305,8 @@ class DimCalculatorGUI(QMainWindow):
             self.result_label.setText(result_str)
             self.info_text.clear()
 
-    def show_history(self):
+    @catch_exceptions("处理历史记录时崩溃\n")
+    def show_history(self, checked=False):
         """展示历史记录"""
         if not self.core.history:
             QMessageBox.information(self, "历史记录", "暂无历史记录")
