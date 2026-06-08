@@ -176,7 +176,7 @@ class DimCalculatorGUI(QMainWindow):
                 btn.setToolTip(display_name)  # 悬停显示内部符号
                 btn.clicked.connect(
                     lambda checked, s=symbol, n=name:
-                    self.handle_unit_click("_" + s) if n not in ("pi", "e") else self.handle_unit_click(s)
+                    self.expr_edit.insert("_" + s) if n not in ("pi", "e") else self.expr_edit.insert(s)
                 )
                 unit_layout.addWidget(btn, row, col)
                 col += 1
@@ -202,7 +202,7 @@ class DimCalculatorGUI(QMainWindow):
             btn = QPushButton(func)
             btn.setObjectName("funcBtn")
             btn.setToolTip(tip)
-            btn.clicked.connect(lambda checked, f=func: self.handle_unit_click(f + "("))
+            btn.clicked.connect(lambda checked, f=func: self.expr_edit.insert(f + "("))
             func_layout.addWidget(btn, row, col)
             col += 1
             if col > 2:
@@ -276,11 +276,11 @@ class DimCalculatorGUI(QMainWindow):
             case '⌫':
                 self.expr_edit.backspace()
             case '√':
-                self.handle_unit_click('√(')
+                self.expr_edit.insert('√(')
             case "∧":
-                self.handle_unit_click('^')
+                self.expr_edit.insert('^')
             case t:
-                self.handle_unit_click(t)
+                self.expr_edit.insert(t)
 
     @catch_exceptions("处理计算时崩溃\n")
     def calculate(self):

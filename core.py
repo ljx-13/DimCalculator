@@ -19,6 +19,8 @@ class DimCalculatorCore:
         """(exper, result_str)"""
         self.last_ans = "0"
         self.namespace = self._build_namespace()
+        print(self.ureg.cm3)  # 应该输出 <Unit('cm3')>
+        print((1 * self.ureg.cm3).to('m3'))  # 应该输出 1e-06 meter ** 3
 
     @property
     def units(self) -> List[Tuple[str, str, str, bool]]:
@@ -37,9 +39,11 @@ class DimCalculatorCore:
                  .replace("÷", "/").replace(":", "/").replace("\\", "/")
                  .replace("[", "(").replace("]", ")").replace("{", "(").replace("}", ")")
                  .replace("√(", "sqrt(").replace("%", "/100")
-                 .replace("ans", self.last_ans).replace("π", str(self.consts[0][3])))
+                 .replace("ans", self.last_ans)#.replace("π", str(self.consts[0][3]))
+                 )
 
         def replace_if_surrounded_by_math(exp, sym: str, name: str):
+            """替换数学符号及数字中的exp"""
             allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")
             result = []
             i = 0
@@ -201,7 +205,7 @@ class DimCalculatorCore:
                 # 注册单位
                 if not hasattr(self.ureg, name):
                     self.ureg.define(f"{name} = {definition} = {symbol}")
-                    # print(name)
+                    loger.debug("new_define_unit: " + name)
                 units_list.append((name, display_name, symbol, common))
             # 导入合并单位
             preferred_unit_names = data.get("preferred_units", [])
@@ -430,7 +434,7 @@ class DimCalculatorCore:
             else:
                 return ''.join(SUPERSCRIPT.get(c, c) for c in exp)
         result = re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result)
-        return result.replace("deg", "°").replace("*", "·")
+        return result
 
     @staticmethod
     def _round_magnitude(value: float):
@@ -486,6 +490,7 @@ class DimCalculatorCore:
                 result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")  # fixme
             else:
                 result_str = str(self._round_magnitude(result))
+            result_str = result_str
             loger.debug("final result: " + result_str)
         except Exception as e:
             # 诊断错误
@@ -495,7 +500,7 @@ class DimCalculatorCore:
             # 记录历史
             self.history.append((original_exper, result_str))
             self.last_ans = result_str
-            return self._format_scientific(result_str), None
+            return self._format_scientific(result_str).replace("deg", "°"), None  #todo: *·
 
     def convert_unit(self, target_unit: str):
         """
@@ -509,7 +514,7 @@ class DimCalculatorCore:
             converted = q.to(target_unit)
             # 格式化输出
             result_str = f"{self._round_magnitude(converted.magnitude)}{converted.units:~}".replace(" ", "")
-            return self._format_scientific(result_str), None
+            return self._format_scientific(result_str).replace("deg", "°").replace("*", "·"), None
         except pint.DimensionalityError:
             return None, f"❌ 单位不匹配：无法将 {self.last_ans} 转换为 {target_unit}"
         except pint.UndefinedUnitError:
