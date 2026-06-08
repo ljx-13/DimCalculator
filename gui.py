@@ -30,7 +30,7 @@ class DimCalculatorGUI(QMainWindow):
         super().__init__()
         self.core = DimCalculatorCore()
         self.is_convert_mode = False  # 标记是否处于单位转换模式
-        self.convert_source_value = None  # 存储待转换的原始结果  # fixme
+        # self.convert_source_value = None  # 存储待转换的原始结果  # fixme
         self.initUI()
 
     @catch_exceptions("初始化窗口时崩溃\n")
@@ -233,7 +233,7 @@ class DimCalculatorGUI(QMainWindow):
     def handle_unit_click(self, symbol):
         if self.is_convert_mode:
             # 处于转换模式：执行单位转换
-            if self.convert_source_value:
+            if self.is_convert_mode:
                 converted_result, error = self.core.convert_unit(symbol)
                 if error:
                     self.result_label.setText("转换错误")
@@ -247,7 +247,6 @@ class DimCalculatorGUI(QMainWindow):
                         if btn.text() == "单位转换":
                             btn.setChecked(False)
                             break
-                    self.convert_source_value = None
         else:
             # 非转换模式：正常插入单位符号
             self.expr_edit.insert(symbol)
@@ -264,15 +263,10 @@ class DimCalculatorGUI(QMainWindow):
                 if self.is_convert_mode:
                     # 进入转换模式时，先获取当前计算结果作为源值
                     current_result = self.result_label.text()
-                    if current_result not in ("结果", "错误"):
-                        self.convert_source_value = current_result
-                    else:
+                    if current_result in ("结果", "错误"):
                         QMessageBox.warning(self, "提示", "请先完成计算再进行单位转换")
                         self.is_convert_mode = False
                         btn.setChecked(False)
-                else:
-                    # 退出转换模式时清空源值
-                    self.convert_source_value = None
             case '=':
                 self.calculate()
             case 'C':

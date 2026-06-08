@@ -471,7 +471,7 @@ class DimCalculatorCore:
                 result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")
             else:
                 result_str = str(self._round_magnitude(result))
-            loger.debug("final result: " + result_str)  # todo: float -> int
+            loger.debug("final result: " + result_str)
         except Exception as e:
             # 诊断错误
             diagnosis = self.diagnose_error(e)

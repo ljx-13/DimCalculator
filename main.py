@@ -43,7 +43,7 @@ from PyQt5.QtCore import Qt, QTimer
 
 class MyApplication(QApplication):
     def notify(self, receiver, event):
-        """重写 notify 方法，捕获所有事件中的异常"""
+        """重写 notify 方法，捕获所有事件中的异常"""  # fixme: 无效
         try:
             return super().notify(receiver, event)
         except Exception as e:
