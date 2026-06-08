@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from functools import lru_cache
 import logging
 import pint
 import math
@@ -32,7 +33,7 @@ class DimCalculatorCore:
     def processed(self, exper):
         """处理输入"""
         # 替换输入字符串中的部分字符
-        exper = (exper.replace("×", "*").replace("^", "**")
+        exper = (exper.replace("×", "*").replace("^", "**").replace("××", "* *")
                  .replace("÷", "/").replace(":", "/").replace("\\", "/")
                  .replace("[", "(").replace("]", ")").replace("{", "(").replace("}", ")")
                  .replace("√(", "sqrt(").replace("%", "/100")
@@ -155,6 +156,7 @@ class DimCalculatorCore:
             exper += ")" * s9s0
         return exper
 
+    @lru_cache(maxsize=128)  # 缓存计算结果
     def safe_eval(self, exper: str):
         """
         安全计算表达式，支持单位和数学函数。
@@ -409,36 +411,48 @@ class DimCalculatorCore:
         return f"❌ 计算错误：{err_msg}\n💡 提示：请检查表达式语法、单位是否正确，或简化表达式后重试。"
 
     @staticmethod
-    def _format_scientific(result_str_: str) -> str:  # fixme: **0.5  **-06(mu0)
+    def _format_scientific(result: str) -> str:
         """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
         import re
         SUPERSCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
                        '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', }
-        # 1. 处理 1.234e+15 这种
-        result_str_ = re.sub(
-            r'(\d+\.?\d*)[eE]\+?(-?\d+)',
+        # 处理科学计数法
+        result = re.sub(
+            r'(\d+(?:\.\d+)?)[eE]\+?(-?\d+)',
             lambda m: f"{m.group(1)}×10{''.join(SUPERSCRIPT.get(c, c) for c in m.group(2))}",
-            result_str_
+            result
         )
-        # 2. 处理 ** 指数（只处理紧跟在数字/括号/单位后面的 **）
-        result_str_ = re.sub(
-            r'\*\*(-?\d+)',
-            lambda m: ''.join(SUPERSCRIPT.get(c, c) for c in m.group(1)),
-            result_str_
-        )
-        return result_str_.replace("deg", "°").replace("*", "·")
+        # 处理 ** 指数：优先匹配小数，再匹配整数
+        def replace_power(m):
+            exp = m.group(1)
+            if '.' in exp:
+                return f"^{exp}"
+            else:
+                return ''.join(SUPERSCRIPT.get(c, c) for c in exp)
+        result = re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result)
+        return result.replace("deg", "°").replace("*", "·")
 
     @staticmethod
-    def _round_magnitude(value):
+    def _round_magnitude(value: float):
+        """四舍五入，同时避免丢失极大极小值"""
         if isinstance(value, float):
             if 0 < abs(value) < 1e-10 or abs(value) > 1e10:
-                return f"{value:.6e}".rstrip('0').rstrip('.')
+                return f"{value:.12g}".rstrip('0').rstrip('.')
             rounded = round(value, 12)
             if rounded.is_integer():
                 return str(int(rounded))
             result = f"{rounded:.12g}"
-            if '.' in result:
-                result = result.rstrip('0').rstrip('.')
+            # 去除e-06中的前导0
+            parts = result.split('e')
+            if len(parts) == 2:
+                exp = parts[1]
+                if exp[0] in "+-":
+                    if exp[1] == '0':
+                        exp = exp[0] + exp[2:]
+                else:
+                    if exp[0] == '0':
+                        exp = exp[0] + exp[2:]
+                result = parts[0].rstrip('0').rstrip('.') + 'e' + exp
             return result
         return str(value)
 
@@ -465,10 +479,11 @@ class DimCalculatorCore:
                     result_str = f"{mag_str}{result.units:~}".replace(" ", "")
                     loger.debug("format: " + result_str)
                 except:
+                    loger.warning("failed to format result: " + str(result))
                     result_str = str(result).replace(" ", "")
                 # 把1/X改成X^-1的格式
                 result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
-                result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")
+                result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")  # fixme
             else:
                 result_str = str(self._round_magnitude(result))
             loger.debug("final result: " + result_str)
@@ -493,7 +508,7 @@ class DimCalculatorCore:
             # 转换为目标单位
             converted = q.to(target_unit)
             # 格式化输出
-            result_str = f"{converted.magnitude}{converted.units:~}".replace(" ", "")
+            result_str = f"{self._round_magnitude(converted.magnitude)}{converted.units:~}".replace(" ", "")
             return self._format_scientific(result_str), None
         except pint.DimensionalityError:
             return None, f"❌ 单位不匹配：无法将 {self.last_ans} 转换为 {target_unit}"

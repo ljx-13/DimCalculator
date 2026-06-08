@@ -1,4 +1,4 @@
-DEBUG = False
+DEBUG = True
 if DEBUG:
     import cProfile
     import pstats
@@ -13,10 +13,11 @@ import traceback
 from logging.handlers import RotatingFileHandler
 from PyQt5 import __file__ as pyqt5_file
 
-handler = RotatingFileHandler("DimCalculator.log", maxBytes=1204*1024, backupCount=3)
+sys.stdout.reconfigure(encoding='utf-8')
+handler = RotatingFileHandler("DimCalculator.log", maxBytes=1204*1024, backupCount=3, encoding='utf-8')
 logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    handlers=[handler],
+                    # handlers=[handler],
                     )
 
 # 【本地运行 + 打包后 双兼容】

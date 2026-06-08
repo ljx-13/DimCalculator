@@ -1,5 +1,5 @@
 import traceback
-import functools
+from functools import wraps
 import logging
 
 from PyQt5.QtGui import QFont, QIcon
@@ -13,7 +13,7 @@ from core import DimCalculatorCore
 def catch_exceptions(msg=""):
     """捕获函数中的异常，弹出错误窗口并记录日志"""
     def decorator(func):
-        @functools.wraps(func)
+        @wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
@@ -30,7 +30,6 @@ class DimCalculatorGUI(QMainWindow):
         super().__init__()
         self.core = DimCalculatorCore()
         self.is_convert_mode = False  # 标记是否处于单位转换模式
-        # self.convert_source_value = None  # 存储待转换的原始结果  # fixme
         self.initUI()
 
     @catch_exceptions("初始化窗口时崩溃\n")
@@ -261,7 +260,6 @@ class DimCalculatorGUI(QMainWindow):
                 self.is_convert_mode = not self.is_convert_mode
                 btn.setChecked(self.is_convert_mode)  # 保持按下/弹起状态
                 if self.is_convert_mode:
-                    # 进入转换模式时，先获取当前计算结果作为源值
                     current_result = self.result_label.text()
                     if current_result in ("结果", "错误"):
                         QMessageBox.warning(self, "提示", "请先完成计算再进行单位转换")
