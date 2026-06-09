@@ -19,8 +19,6 @@ class DimCalculatorCore:
         """(exper, result_str)"""
         self.last_ans = "0"
         self.namespace = self._build_namespace()
-        print(self.ureg.cm3)  # 应该输出 <Unit('cm3')>
-        print((1 * self.ureg.cm3).to('m3'))  # 应该输出 1e-06 meter ** 3
 
     @property
     def units(self) -> List[Tuple[str, str, str, bool]]:
@@ -466,7 +464,7 @@ class DimCalculatorCore:
         :return: (结果字符串, 错误信息)
         """
         # raise SyntaxError
-        loger.debug("========== DEBUG ==========")
+        loger.debug("\n========== DEBUG ==========")
         loger.debug("origin: " + original_exper)
         exper = self.processed(original_exper)
         loger.debug("final exper: " + exper)
