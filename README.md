@@ -1,7 +1,7 @@
 # DimCalculator - 智能量纲计算器
 
 **@ author: ljx-13**
-**@ version: 0.1.2**
+**@ version: 0.1.3**
 
 ## 项目简介
 

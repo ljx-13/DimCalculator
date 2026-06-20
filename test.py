@@ -1,0 +1,202 @@
+import logging
+import sys
+sys.path.insert(0, '.')
+
+from core import DimCalculatorCore
+
+sys.stdout.reconfigure(encoding='utf-8')
+logging.basicConfig(level=logging.DEBUG,
+                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    )
+
+calc = DimCalculatorCore()
+
+def test(expr, expected_contains=None, should_error=False, verbose=True):
+    """简单的测试函数"""
+    result, error = calc.evaluate(expr)
+
+    if should_error:
+        assert error is not None, f"期望报错，但没有: {expr}"
+        if verbose:
+            print(f"{expr} → 正确报错: {error[:50]}...")
+        return True
+    else:
+        assert error is None, f"报错了: {error}"
+        if expected_contains:
+            assert expected_contains in result, f"期望包含 '{expected_contains}'，得到 '{result}'"
+        if verbose:
+            print(f"{expr} → {result}")
+        return True
+
+
+def run_all_tests():
+    print("=" * 60)
+    print("DimCalculator 测试开始")
+    print("=" * 60)
+
+    # ========== 1. 基础算术 ==========
+    print("\n基础算术运算:")
+    test("1+1", "2")
+    test("10-3", "7")
+    test("2*6", "12")
+    test("15/3", "5")
+    test("2**10", "1024")
+    test("(3+5)*2", "16")
+
+    # ========== 2. 长度单位 ==========
+    print("\n长度单位:")
+    test("5*m + 20*cm", "5.2m")
+    test("1*km + 500*m", "1500m")
+    test("100*cm", "1m")
+    test("1000*mm", "1m")
+    test("1*km / 2", "500m")
+
+    # ========== 3. 质量单位 ==========
+    print("\n质量单位:")
+    test("1*kg + 500*g", "1.5kg")
+    test("1000*g", "1kg")
+    test("2*kg * 3", "6kg")
+
+    # ========== 4. 时间单位 ==========
+    print("\n时间单位:")
+    test("60*s", "1min")
+    test("3600*s", "1h")
+    test("1*h + 30*min", "1.5h")
+    test("1*d", "24h")
+
+    # ========== 5. 复合单位 ==========
+    print("\n复合单位:")
+    test("10*m/s", "10m/s")
+    test("1*km/h", "0.277777777778m/s")
+    test("9.8*m/s**2", "9.8m/s²")
+
+    # ========== 6. 导出单位 ==========
+    print("\n导出单位 (N, J, W, Pa, V, Ω):")
+    test("10kg * _g", "N")
+    test("100N * 2m", "J")
+    test("100J / 10s", "W")
+    test("100N / 2m2", "Pa")
+    test("10V / 2A", "Ω")
+    test("2A * 5Ω", "10V")
+    test("10V * 2A", "20W")
+
+    # ========== 7. 物理常数 ==========
+    print("\n物理常数:")
+    test("_g", "9.8m/s²")
+    test("_g * 5kg", "N")
+    test("_c", "299792458m/s")
+    test("_G", "×10⁻¹¹")  # 或者 "m³/kg/s²"
+    test("_N_A", "×10²³")
+    test("_h", "×10⁻³⁴")
+    # test("_e_charge", "×10⁻¹⁹") fixme
+    # test("_m_e", "×10⁻³¹")
+    # test("_k_B", "×10⁻²³")
+    test("_epsilon_0", "×10⁻¹²")
+    test("_mu_0", "×10⁻⁶")
+
+    # ========== 8. 数学常数 ==========
+    print("\n数学常数:")
+    test("pi", "3.14159")
+    test("e", "2.71828")
+    test("2*pi", "6.28318")
+
+    # ========== 9. 三角函数 ==========
+    print("\n三角函数 (角度/弧度):")
+    test("sin(30*deg)", "0.5")
+    test("cos(60*deg)", "0.5")
+    test("tan(45*deg)", "1")
+    test("sin(pi/2)", "1")
+    test("cos(0)", "1")
+    test("tan(pi/4)", "1")
+    test("sin(pi)", "0")
+
+    # ========== 10. 数学函数 ==========
+    print("\n数学函数:")
+    test("sqrt(144)", "12")
+    test("sqrt(2)", "1.41421")
+    test("abs(-5)", "5")
+    test("abs(5)", "5")
+    test("log(100, 10)", "2")
+    test("lg(100)", "2")
+    test("ln(e)", "1")
+
+    # ========== 11. 常用体积单位 ==========
+    print("\n体积单位:")
+    test("1mL", "1ml")
+    test("1000*mL", "1l")
+
+    # ========== 12. 温度 ==========
+    print("\n温度:")
+    test("25*degC", "25°C")
+    # test("273.15*K", "-0°C")
+    # 温差
+    test("100*degC - 20*degC", "80Δ°C")
+
+    # ========== 13. ans / last_ans ==========
+    print("\n上一次结果 (ans):")
+    test("10m")
+    test("ans * 2", "20m")
+    test("ans + 5*m", "25m")
+
+    # ========== 14. 幂运算 ==========
+    print("\n幂运算:")
+    test("2**3", "8")
+    test("10**2", "100")
+    test("(2*m)**3", "8m³")
+
+    # ========== 15. 括号 ==========
+    print("\n括号:")
+    test("(3+5)*(2+4)", "48")
+    test("(10*m)/(2*s)", "5m/s")
+
+    # ========== 16. 科学计数法 ==========
+    print("\n科学计数法:")
+    test("1e3", "1000")
+    test("1e-3", "001")
+    test("1e3*m", "1000m")
+
+    # ========== 17. 错误诊断 ==========
+    print("\n错误诊断:")
+    test("5*m + 10*s", should_error=True)
+    test("10*kg + 5*m", should_error=True)
+    test("5*xyz", should_error=True)
+    test("sqrt(-1)", should_error=True)
+    test("log(0)", should_error=True)
+    test("asin(2)", should_error=True)
+    test("10/0", should_error=True)
+
+    # ========== 18. 混合表达式 ==========
+    print("\n混合表达式:")
+    test("sqrt(100*m**2)", "10m")
+    test("_g * 10*kg * 2*m", "196J")
+    test("100*W * 5*s", "500J")
+    test("sin(30*deg) + cos(60*deg)", "1")
+    # test("(10*kg * 9.8*m/s**2) / (2*m**2)", "49Pa")
+
+    # ========== 19. 单位转换 ==========
+    print("\n单位转换 (convert_unit):")
+    calc = DimCalculatorCore()
+    calc.evaluate("10*m")
+    result, error = calc.convert_unit("cm")
+    if error is None:
+        print(f"10*m → cm: {result}")
+    else:
+        print(f"单位转换测试跳过: {error}", file=sys.stderr)
+
+    print("\n" + "=" * 60)
+    print("所有测试通过！")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    run_all_tests()
+    # import sys
+    #
+    # sys.path.insert(0, '.')
+    #
+    # from core import DimCalculatorCore
+    #
+    # calc = DimCalculatorCore()
+    # result, error = calc.evaluate("_g * 5*kg")
+    # print(f"结果: {result}")
+    # print(f"错误: {error}")

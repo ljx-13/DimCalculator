@@ -30,6 +30,7 @@ class DimCalculatorCore:
         """List[(英文名称, 显示名称, 符号, 值)]"""
         return self.__consts
 
+
     def processed(self, exper):
         """处理输入"""
         # 替换输入字符串中的部分字符
@@ -159,7 +160,7 @@ class DimCalculatorCore:
         return exper
 
     @lru_cache(maxsize=128)  # 缓存计算结果
-    def safe_eval(self, exper: str):
+    def _safe_eval(self, exper: str) -> "pint.Quantity | int | float":
         """
         安全计算表达式，支持单位和数学函数。
         :return: pint.Quantity或数值。
@@ -172,11 +173,7 @@ class DimCalculatorCore:
             result = eval(exper, self.namespace)
             # print(exper, type(result), self.namespace)
             if isinstance(result, pint.Quantity):
-                try:
-                    # 合并单位
-                    result = result.to_preferred()
-                except:
-                    pass
+                result = self._to_preferred(result)
             return result
         except pint.DimensionalityError:
             raise
@@ -208,6 +205,7 @@ class DimCalculatorCore:
             # 导入合并单位
             preferred_unit_names = data.get("preferred_units", [])
             self.ureg.default_preferred_units = [self.ureg.Unit(name) for name in preferred_unit_names]
+            self.preferred_units = preferred_unit_names
             # print(ureg.default_preferred_units)
             return units_list
         except FileNotFoundError:
@@ -297,6 +295,7 @@ class DimCalculatorCore:
         namespace['abs'] = _abs
         namespace['log'] = log
         namespace['lg'] = math.log10
+        namespace['ln'] = lambda x: math.log(x, math.e)
         return namespace
 
     def diagnose_error(self, error: Exception) -> str:  # todo: 角度弧度
@@ -458,7 +457,42 @@ class DimCalculatorCore:
             return result
         return str(value)
 
-    def evaluate(self, original_exper: str):
+    def _to_preferred(self, result: "pint.Quantity"):
+        if isinstance(result, pint.Quantity):
+            unit = str(result.units)
+            print(unit)
+            if "liter" in unit:
+                if result.magnitude >= 1000:
+                    result = result.to('liter')
+                return result
+            try:
+                result = result.to_preferred()
+                loger.debug("auto to_preferred(): " + str(result))
+            except Exception as e:
+                loger.warning("failed auto to_preferred(): " + str(e))
+            finally:
+                if set(result.dimensionality.keys()) == {'[time]'}:  # fixme
+                    mag = abs(result.magnitude)
+                    if mag >= 3600:
+                        result = result.to('h')
+                    elif mag >= 60:
+                        result = result.to('min')
+                        # if abs(result.magnitude) >= 60:
+                        #     result = result.to('min')
+                        if abs(result.magnitude) >= 60 * 60:
+                            result = result.to('h')
+                for u in self.preferred_units:
+                    # if result == "49kg*m/s²/m²":
+                    #     breakpoint()
+                    #     print(u, result, result.check(u))
+                    if result.check(u):
+                        loger.warning("unauto to_preferred(): " + u)
+                        result = result.to(u)
+                return result
+        else:
+            raise TypeError
+
+    def evaluate(self, original_exper: str) -> tuple[str | None, str | None]:
         """
         计算表达式
         :return: (结果字符串, 错误信息)
@@ -469,7 +503,7 @@ class DimCalculatorCore:
         exper = self.processed(original_exper)
         loger.debug("final exper: " + exper)
         try:
-            result = self.safe_eval(exper)
+            result = self._safe_eval(exper)
             loger.debug("original result: " + str(result))
             # 格式化输出
             if isinstance(result, pint.Quantity):
@@ -485,7 +519,6 @@ class DimCalculatorCore:
                     result_str = str(result).replace(" ", "")
                 # 把1/X改成X^-1的格式
                 result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
-                result_str = result_str.replace("V/A", "Ω").replace("A*Ω", "V")  # fixme
             else:
                 result_str = str(self._round_magnitude(result))
             result_str = result_str
