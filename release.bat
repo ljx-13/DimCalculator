@@ -1,4 +1,3 @@
-```batch
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
@@ -90,4 +89,3 @@ echo    版本: %VERSION%
 echo    文件: dist\DimCalculator\DimCalculator.exe
 echo ========================================
 pause
-```
