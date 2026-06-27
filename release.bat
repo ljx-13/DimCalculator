@@ -72,7 +72,7 @@ if exist dist (
 :: 步骤7：打包
 echo.
 echo 正在打包，请稍候...
-pyinstaller --onedir --windowed --icon=../datas/icon.ico --name DimCalculator --add-data "../.venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" ../main.py
+pyinstaller --onedir --windowed --icon=../datas/icon.ico --name DimCalculator --add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" main.py
 
 if errorlevel 1 (
     echo [错误] 打包失败！
