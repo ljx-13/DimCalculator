@@ -44,6 +44,7 @@ if /i not "%confirm%"=="y" (
 echo.
 echo [3/5] 正在提交...
 git add .
+git tag -a %version% -m "%commit_msg%"
 git commit -m "%commit_msg%"
 if errorlevel 1 (
     echo [警告] 提交失败或无变更
@@ -51,35 +52,9 @@ if errorlevel 1 (
     echo 提交成功
 )
 
-:: 步骤4：推送到 GitHub
-echo.
-set /p confirm="[4/5] 是否推送到远程？(y/n): "
-if /i not "%confirm%"=="y" (
-    echo 跳过推送
-    goto :skip_push
-)
-
-echo 正在推送到 GitHub...
-git push origin main
-if errorlevel 1 (
-    echo [警告] GitHub 推送失败
-) else (
-    echo GitHub 推送成功
-)
-
-echo 正在推送到 Gitee...
-git push gitee main
-if errorlevel 1 (
-    echo [警告] Gitee 推送失败
-) else (
-    echo Gitee 推送成功
-)
-
-:skip_push
-
 :: 步骤6：确认打包
 echo.
-set /p confirm="[6/6] 确认开始打包？(y/n): "
+set /p confirm="[4/5] 确认开始打包？(y/n): "
 if /i not "%confirm%"=="y" (
     echo 已取消打包
     exit /b 0
@@ -104,6 +79,44 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+:: ===== 新增：在打包好的程序路径下创建 log 文件夹 =====
+echo.
+echo 正在创建 log 文件夹...
+if exist "dist\DimCalculator" (
+    mkdir "dist\DimCalculator\log" 2>nul
+    echo log 文件夹已创建在 dist\DimCalculator\log
+) else (
+    echo [警告] 找不到 dist\DimCalculator 目录，请手动创建 log 文件夹
+)
+
+:: 步骤4：推送到 GitHub
+echo.
+set /p confirm="[5/5] 是否推送到远程？(y/n): "
+if /i not "%confirm%"=="y" (
+    echo 跳过推送
+    exit /b 0
+)
+
+echo 正在推送到 GitHub...
+git push origin main
+if errorlevel 1 (
+    echo [警告] GitHub 推送失败
+) else (
+    echo GitHub 推送成功
+)
+
+echo 正在推送到 Gitee...
+git push gitee main
+if errorlevel 1 (
+    echo [警告] Gitee 推送失败
+) else (
+    echo Gitee 推送成功
+)
+
+:skip_push
+
+
 
 echo.
 echo ========================================
