@@ -72,7 +72,7 @@ if exist dist (
 :: 步骤7：打包
 echo.
 echo 正在打包，请稍候...
-pyinstaller --onedir --windowed --icon=../datas/icon.ico --name DimCalculator --add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" main.py
+pyinstaller --onedir --windowed --icon=datas/icon.ico --name DimCalculator --add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" main.py
 
 if errorlevel 1 (
     echo [错误] 打包失败！
@@ -89,6 +89,14 @@ if exist "dist\DimCalculator" (
 ) else (
     echo [警告] 找不到 dist\DimCalculator 目录，请手动创建 log 文件夹
 )
+if exist "src" (
+        xcopy /E /I /Y "src" "%OUT_DIR%\src" >nul
+        echo 已复制 src 文件夹
+    )
+    if exist "datas" (
+        xcopy /E /I /Y "datas" "%OUT_DIR%\datas" >nul
+        echo 已复制 datas 文件夹
+    )
 
 :: 步骤4：推送到 GitHub
 echo.
