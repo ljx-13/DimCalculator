@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel
 # from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 
-from core import DimCalculatorCore
+from .core import DimCalculatorCore
 
 def catch_exceptions(msg=""):
     """捕获函数中的异常，弹出错误窗口并记录日志"""
@@ -20,7 +20,7 @@ def catch_exceptions(msg=""):
             except Exception as e:
                 error_msg = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
                 logging.critical(error_msg)
-                QMessageBox.critical(None, "程序崩溃", msg + "错误日志已保存至 DimCalculator.log")
+                QMessageBox.critical(None, "程序崩溃", msg + "\n错误日志已保存至 log/DimCalculator.log")
                 return None
         return wrapper
     return decorator
@@ -32,14 +32,14 @@ class DimCalculatorGUI(QMainWindow):
         self.is_convert_mode = False  # 标记是否处于单位转换模式
         self.initUI()
 
-    @catch_exceptions("初始化窗口时崩溃\n")
+    @catch_exceptions("初始化窗口时崩溃")
     def initUI(self):  # todo: 欢迎
         self.setWindowTitle("DimCalculator - 智能量纲计算器")
         self.setMinimumSize(700, 700)
         # raise SyntaxError
         self.setMaximumWidth(1000)
         self.setBaseSize(700, 700)
-        self.setWindowIcon(QIcon("icon.ico"))
+        self.setWindowIcon(QIcon("datas/icon.ico"))
         self.setStyleSheet("""
             QMainWindow { background-color: #f3f3f3; }
             QLineEdit#exprEdit {
@@ -138,7 +138,7 @@ class DimCalculatorGUI(QMainWindow):
         unit_layout = QGridLayout(unit_widget)
         row, col = 0, 0
         if not self.core.units:
-            label = QLabel("单位配置文件导入错误\n请检查 units.json")
+            label = QLabel("单位配置文件导入错误\n请检查 datas/units.json")
             label.setAlignment(Qt.AlignCenter)
             right_tabs.addTab(label, "单位")
         else:
@@ -166,7 +166,7 @@ class DimCalculatorGUI(QMainWindow):
         unit_layout = QGridLayout(const_widget)
         row, col = 0, 0
         if not self.core.consts:
-            label = QLabel("常数配置文件导入错误\n请检查 consts.json")
+            label = QLabel("常数配置文件导入错误\n请检查 datas/consts.json")
             label.setAlignment(Qt.AlignCenter)
             right_tabs.addTab(label, "常数")
         else:
@@ -228,7 +228,7 @@ class DimCalculatorGUI(QMainWindow):
 
         self.resize(700, 700)
 
-    @catch_exceptions("处理单位输入时崩溃\n")
+    @catch_exceptions("处理单位输入时崩溃")
     def handle_unit_click(self, symbol):
         if self.is_convert_mode:
             # 处于转换模式：执行单位转换
@@ -250,7 +250,7 @@ class DimCalculatorGUI(QMainWindow):
             # 非转换模式：正常插入单位符号
             self.expr_edit.insert(symbol)
 
-    @catch_exceptions("处理按钮事件时崩溃\n")
+    @catch_exceptions("处理按钮事件时崩溃")
     def on_button_clicked(self, checked=False):
         btn = self.sender()
         text = btn.text()
@@ -282,7 +282,7 @@ class DimCalculatorGUI(QMainWindow):
             case t:
                 self.expr_edit.insert(t)
 
-    @catch_exceptions("处理计算时崩溃\n")
+    @catch_exceptions("处理计算时崩溃")
     def calculate(self):
         expr = self.expr_edit.text()
         if not expr.strip():
@@ -297,7 +297,7 @@ class DimCalculatorGUI(QMainWindow):
             self.result_label.setText(result_str)
             self.info_text.clear()
 
-    @catch_exceptions("处理历史记录时崩溃\n")
+    @catch_exceptions("处理历史记录时崩溃")
     def show_history(self, checked=False):
         """展示历史记录"""
         if not self.core.history:

@@ -11,7 +11,7 @@ loger = logging.getLogger(__name__)
 
 class DimCalculatorCore:
     """核心计算类，支持超时控制和错误诊断"""
-    def __init__(self, units_file="units.json", constants_file="consts.json"):
+    def __init__(self, units_file="datas/units.json", constants_file="datas/consts.json"):
         self.ureg = ureg
         self.__units = self._load_units(units_file)
         self.__consts = self._load_consts(constants_file)
@@ -460,7 +460,7 @@ class DimCalculatorCore:
     def _to_preferred(self, result: "pint.Quantity"):
         if isinstance(result, pint.Quantity):
             unit = str(result.units)
-            print(unit)
+            # print(unit)
             if "liter" in unit:
                 if result.magnitude >= 1000:
                     result = result.to('liter')

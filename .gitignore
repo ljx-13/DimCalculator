@@ -1,8 +1,8 @@
 .venv/
 .idea/
 __pycache__/
+*.pyc
 build/
 dist/
 DimCalculator.spec
-*.log
-*.prof
+log/

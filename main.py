@@ -18,7 +18,7 @@ from PyQt5 import __file__ as pyqt5_file
 if getattr(sys, 'frozen', False):
     # 打包后：从exe临时目录找
     plugin_path = os.path.join(sys._MEIPASS, 'platforms')
-    handler = RotatingFileHandler("DimCalculator.log", maxBytes=1204 * 1024, backupCount=3, encoding='utf-8')
+    handler = RotatingFileHandler("log/DimCalculator.log", maxBytes=1204 * 1024, backupCount=3, encoding='utf-8')
     logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR,
                         format="%(asctime)s - %(levelname)s - %(message)s",
                         handlers=[handler],  # 输出到文件
@@ -53,7 +53,7 @@ class MyApplication(QApplication):
         except Exception as e:
             error_msg = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
             logging.critical(error_msg)
-            QMessageBox.critical(None, "程序错误", "错误日志已保存至 DimCalculator.log")
+            QMessageBox.critical(None, "程序错误", "错误日志已保存至 log/DimCalculator.log")
             return False
 
 if __name__ == '__main__':
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         splash.show()
         # 延迟加载主窗口
         def load_main_window():
-            from gui import DimCalculatorGUI
+            from src.gui import DimCalculatorGUI
             window = DimCalculatorGUI()
             window.show()
             splash.finish(window)
@@ -82,10 +82,10 @@ if __name__ == '__main__':
         # window.show()
         if DEBUG:
             profiler.disable()
-            profiler.dump_stats('startup_profile.prof')
+            profiler.dump_stats('log/startup_profile.prof')
             logging.info("\n\n==========<NEW START>==========>")
             if getattr(sys, 'frozen', False):
-                with open("DimCalculator.log", "a", encoding="utf-8") as f:
+                with open("log/DimCalculator.log", "a", encoding="utf-8") as f:
                     # 打印前20个最耗时的函数
                     stats = pstats.Stats(profiler, stream=f)
                     stats.sort_stats(SortKey.CUMULATIVE)
@@ -103,7 +103,7 @@ if __name__ == '__main__':
             if app is None:
                 # 创建临时实例用于弹窗
                 temp_app = QApplication(sys.argv)
-                QMessageBox.critical(None, "程序崩溃", "错误日志已保存至 DimCalculator.log")
+                QMessageBox.critical(None, "程序崩溃", "错误日志已保存至 log/DimCalculator.log")
                 temp_app.quit()
         except:
             pass
