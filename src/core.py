@@ -177,7 +177,7 @@ class DimCalculatorCore:
                     result.append(exp[i])
                     i += 1
             exp = "".join(result)
-            loger.debug("tab *: " + exp)
+            loger.debug("insert *: " + exp)
             return exp
         exper = insert_mul(exper)
 
@@ -201,7 +201,7 @@ class DimCalculatorCore:
             result = eval(exper, self.namespace)
             # print(exper, type(result), self.namespace)
             if isinstance(result, pint.Quantity):
-                result = self._to_preferred(result)
+                result = result
             return result
         except pint.DimensionalityError:
             raise
@@ -487,6 +487,11 @@ class DimCalculatorCore:
     def _to_preferred(self, result: "pint.Quantity"):
         """将Quantity的单位转换到通用单位"""
         if isinstance(result, pint.Quantity):
+            # 如果是无量纲，直接返回数值
+            loger.debug("original dimensionality: " + str(result.dimensionality))
+            if result.dimensionless:
+                if not result.units in ("rad", "r"):
+                    return result.to_base_units().magnitude
             unit = str(result.units)
             # print(unit)
             if "liter" in unit:
@@ -499,12 +504,16 @@ class DimCalculatorCore:
             except Exception as e:
                 loger.warning("failed auto to_preferred(): " + str(e))
             finally:
-                if set(result.dimensionality.keys()) == {'[time]'}:  # fixme: Hz
+                if set(result.dimensionality.keys()) == {'[time]'}:
                     mag = abs(result.magnitude)
-                    if mag >= 3600:
-                        result = result.to('h')
-                    elif mag >= 60:
-                        result = result.to('min')
+                    if result.dimensionality['[time]'] == -1:
+                        if  "rev" not in str(result.units):
+                            result = result.to("Hz")
+                    elif result.dimensionality['[time]'] == 1:
+                        if mag >= 3600:
+                            result = result.to('h')
+                        elif mag >= 60:
+                            result = result.to('min')
                 for u in self.preferred_units:
                     # if result == "49kg*m/s²/m²":
                     #     breakpoint()
@@ -534,6 +543,8 @@ class DimCalculatorCore:
                 # 紧凑格式：5m 而不是 5 meter
                 try:
                     # 智能格式化数值
+                    result = self._to_preferred(result)
+                    loger.debug("to preferred: " + str(result))
                     mag = result.magnitude
                     mag_str = self._round_magnitude(mag)
                     result_str = f"{mag_str}{result.units:~}".replace(" ", "")

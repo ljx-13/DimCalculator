@@ -66,7 +66,10 @@
         { "name": "H", "display_name": "亨利", "symbol": "H", "definition": "V*s/A", "common": false },
         { "name": "T", "display_name": "特斯拉", "symbol": "T", "definition": "Wb/m**2", "common": false },
         { "name": "Wb", "display_name": "韦伯", "symbol": "Wb", "definition": "V*s", "common": false },
-        { "name": "Hz", "display_name": "赫兹", "symbol": "Hz", "definition": "1/s", "common": true }
+        { "name": "Hz", "display_name": "赫兹", "symbol": "Hz", "definition": "1/s", "common": true },
+        { "name": "rev", "display_name": "转", "symbol": "r", "definition": "2*π*radian", "common": false },
+        { "name": "rpm", "display_name": "转每分钟", "symbol": "r/min", "definition": "rev/minute", "common": true },
+        { "name": "rps", "display_name": "转每秒", "symbol": "r/s", "definition": "rev/second", "common": false }
     ],
     "preferred_units": [
         "N", "J", "W", "Pa", "V", "A", "ohm", "Ω", "m²", "m³", "kg", "C", "F", "H", "T", "Wb", "m/s", "m/s²"

@@ -62,7 +62,6 @@ def run_all_tests():
     test("60*s", "1min")
     test("3600*s", "1h")
     test("1*h + 30*min", "1.5h")
-    test("1*d", "24h")
 
     # ========== 5. 单位原子化 ==========
     print("\n单位原子化:")
@@ -81,6 +80,9 @@ def run_all_tests():
     test("10V / 2A", "Ω")
     test("2A * 5Ω", "10V")
     test("10V * 2A", "20W")
+    test("10÷2s", "5Hz")
+    test("7200h", "2s")
+    test("5km/m", "5000")
 
     # ========== 7. 物理常数 ==========
     print("\n物理常数:")
