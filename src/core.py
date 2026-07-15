@@ -6,6 +6,10 @@ import math
 import json
 import re
 
+FUNC_NAMES = {'sin', 'cos', 'tan', 'log', 'lg', 'ln', 'abs', 'sqrt'}
+SUPER_SCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
+                       '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', }
+
 ureg = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
 loger = logging.getLogger(__name__)
 
@@ -34,8 +38,8 @@ class DimCalculatorCore:
     def processed(self, exper):
         """处理输入"""
         # 替换输入字符串中的部分字符
-        exper = (exper.replace("×", "*").replace("^", "**").replace("××", "* *")
-                 .replace("÷", "/").replace(":", "/").replace("\\", "/")
+        exper = (exper.replace("×", "*").replace("××", "* *")
+                 .replace("\\", "/")
                  .replace("[", "(").replace("]", ")").replace("{", "(").replace("}", ")")
                  .replace("√(", "sqrt(").replace("%", "/100")
                  .replace("ans", self.last_ans)#.replace("π", str(self.consts[0][3]))
@@ -77,7 +81,7 @@ class DimCalculatorCore:
 
         def atomize_units(exp) -> str:
             """把单位原子化，如 5V/3A -> (5V)/(3A)，防止计算优先级错误"""
-            # 原子化：数字 + 字母（可能带数字后缀，如 m2, m3） fixme: 复合单位如kg/mol
+            # 原子化：数字 + 字母（可能带数字后缀，如 m2, m3）
             new = []
             i = 0
             n = len(exp)
@@ -96,15 +100,37 @@ class DimCalculatorCore:
                             i += 1
                     num_part = exp[start:i]
 
-                    # 检查后面是否跟字母（单位）
-                    if i < n and (exp[i].isalpha() or exp[i] == '_'):
+                    # 检查后面是否跟单位
+                    if i < n and (exp[i].isalpha() or exp[i] in "_"):
                         ident_start = i
-                        while i < n and (exp[i].isalpha() or exp[i] == '_'):
+                        # 检查函数调用
+                        while i < n and (exp[i].isalpha() or exp[i] in '_/·'):
+                            if exp[i] in '/·':
+                                # 检查 / 后面是不是函数调用
+                                j = i + 1
+                                while j < n and exp[j].isalpha():
+                                    j += 1
+                                if j < n and exp[j] == '(':
+                                    break  # /sin( 这种情况，停止收集
+                                if i < n - 1 and exp[i + 1].isdigit():
+                                    break  # /3A 这种情况，停止收集
+                            # 前瞻：字母后面直接跟 (，也是函数调用
+                            if i == ident_start:
+                                j = i
+                                while j < n and exp[j].isalpha():
+                                    j += 1
+                                if j < n and exp[j] == '(':
+                                    break
                             i += 1
-                        # 允许字母后面跟数字（如 m2, m3）
-                        while i < n and exp[i].isdigit():
-                            i += 1
-                        ident = exp[ident_start:i]  # 包含可能的数字后缀
+                        else:
+                            while i < n and (exp[i].isalpha() or exp[i] in "_/·^+-"):
+                                if exp[i] in "/·+-" and i < n-1 and (exp[i+1].isdigit() or exp[i+1] in "_+-"):
+                                    break
+                                i += 1
+                            # 允许字母后面跟数字（如 m2, m3）
+                            while i < n and (exp[i].isdigit() or exp[i] in "+-"):
+                                i += 1
+                        ident = exp[ident_start:i]
 
                         # 原子化
                         new.append('(' + num_part + ident + ')')
@@ -118,6 +144,8 @@ class DimCalculatorCore:
 
         exper = atomize_units(exper)
         loger.debug("atomized: " + exper)
+        exper = (exper.replace("÷", "/").replace(":", "/")
+                 .replace("^", "**").replace("·", "*"))  # 与复合单位中/区分
 
         def insert_mul(exp):
             """补全省略的乘号"""
@@ -143,7 +171,7 @@ class DimCalculatorCore:
                     # 右括号后紧跟左括号，插入乘号
                     result.append(exp[i])
                     i += 1
-                    if i < n and exp[i] == '(':
+                    if i < n and (exp[i] == '(' or exp[i].isalpha() or exp[i].isdigit()):
                         result.append('*')
                 else:
                     result.append(exp[i])
@@ -415,12 +443,11 @@ class DimCalculatorCore:
     def _format_scientific(result: str) -> str:
         """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
         import re
-        SUPERSCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
-                       '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', }
+
         # 处理科学计数法
         result = re.sub(
             r'(\d+(?:\.\d+)?)[eE]\+?(-?\d+)',
-            lambda m: f"{m.group(1)}×10{''.join(SUPERSCRIPT.get(c, c) for c in m.group(2))}",
+            lambda m: f"{m.group(1)}×10{''.join(SUPER_SCRIPT.get(c, c) for c in m.group(2))}",
             result
         )
         # 处理 ** 指数：优先匹配小数，再匹配整数
@@ -429,7 +456,7 @@ class DimCalculatorCore:
             if '.' in exp:
                 return f"^{exp}"
             else:
-                return ''.join(SUPERSCRIPT.get(c, c) for c in exp)
+                return ''.join(SUPER_SCRIPT.get(c, c) for c in exp)
         result = re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result)
         return result
 
@@ -458,6 +485,7 @@ class DimCalculatorCore:
         return str(value)
 
     def _to_preferred(self, result: "pint.Quantity"):
+        """将Quantity的单位转换到通用单位"""
         if isinstance(result, pint.Quantity):
             unit = str(result.units)
             # print(unit)
@@ -471,16 +499,12 @@ class DimCalculatorCore:
             except Exception as e:
                 loger.warning("failed auto to_preferred(): " + str(e))
             finally:
-                if set(result.dimensionality.keys()) == {'[time]'}:  # fixme
+                if set(result.dimensionality.keys()) == {'[time]'}:  # fixme: Hz
                     mag = abs(result.magnitude)
                     if mag >= 3600:
                         result = result.to('h')
                     elif mag >= 60:
                         result = result.to('min')
-                        # if abs(result.magnitude) >= 60:
-                        #     result = result.to('min')
-                        if abs(result.magnitude) >= 60 * 60:
-                            result = result.to('h')
                 for u in self.preferred_units:
                     # if result == "49kg*m/s²/m²":
                     #     breakpoint()

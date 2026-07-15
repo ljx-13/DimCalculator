@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                     )
 
-calc = DimCalculatorCore()
+calc = DimCalculatorCore(units_file="../datas/units.json", constants_file="../datas/consts.json")
 
 def test(expr, expected_contains=None, should_error=False, verbose=True):
     """简单的测试函数"""
@@ -64,11 +64,13 @@ def run_all_tests():
     test("1*h + 30*min", "1.5h")
     test("1*d", "24h")
 
-    # ========== 5. 复合单位 ==========
-    print("\n复合单位:")
-    test("10*m/s", "10m/s")
-    test("1*km/h", "0.277777777778m/s")
+    # ========== 5. 单位原子化 ==========
+    print("\n单位原子化:")
     test("9.8*m/s**2", "9.8m/s²")
+    test("3m÷5m·s^-1", "0.6s")
+    test("5sin(60°)", "4.33012701892")
+    test("5m÷5mm/min", "1m*min/mm")
+    test("5V/2A", "2.5Ω")
 
     # ========== 6. 导出单位 ==========
     print("\n导出单位 (N, J, W, Pa, V, Ω):")

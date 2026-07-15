@@ -69,6 +69,6 @@
         { "name": "Hz", "display_name": "赫兹", "symbol": "Hz", "definition": "1/s", "common": true }
     ],
     "preferred_units": [
-        "N", "J", "W", "Pa", "V", "A", "ohm", "Ω", "m²", "m³", "kg", "C", "F", "H", "T", "Wb", "Hz", "m/s", "m/s²"
+        "N", "J", "W", "Pa", "V", "A", "ohm", "Ω", "m²", "m³", "kg", "C", "F", "H", "T", "Wb", "m/s", "m/s²"
     ]
 }
