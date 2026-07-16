@@ -44,10 +44,18 @@ class DimCalculatorCore:
                  .replace("√(", "sqrt(").replace("%", "/100")
                  .replace("ans", self.last_ans)#.replace("π", str(self.consts[0][3]))
                  )
-
+        # 上标数字转普通格式（连续上标整体替换）
+        # 匹配连续上标字符（如 ²³ → 23）
+        map_ = {k: v for v, k in SUPER_SCRIPT.items()}
+        exper = re.sub(
+            r'[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+',
+            lambda m: '^' + ''.join(map_[c] for c in m.group()),
+            exper
+        )
+        exper = exper.replace("*10^", "e")
         def replace_if_surrounded_by_math(exp, sym: str, name: str):
             """替换数学符号及数字中的exp"""
-            allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")
+            allowed = set("0123456789+-*/^%!()[]{}×÷⋅: \t_")
             result = []
             i = 0
             n = len(exp)
@@ -71,7 +79,8 @@ class DimCalculatorCore:
 
         # 替换单位符号和常量
         for (name, dn, symbol, c) in self.units:
-            exper = replace_if_surrounded_by_math(exper, symbol, name)
+            if '/' not in symbol:
+                exper = replace_if_surrounded_by_math(exper, symbol, name)
         for (name, dn, symbol, v) in self.consts:
             if name.startswith("_"):  # 物理常量
                 exper = replace_if_surrounded_by_math(exper, "_" + symbol, name)
@@ -99,14 +108,21 @@ class DimCalculatorCore:
                             i += 1
                         while i < n and exp[i].isdigit():
                             i += 1
+                    # 处理 ^ 指数（如 10^-34）
+                    if i < n and exp[i] == '^':
+                        i += 1
+                        if i < n and exp[i] in '+-':
+                            i += 1
+                        while i < n and exp[i].isdigit():
+                            i += 1
                     num_part = exp[start:i]
 
                     # 检查后面是否跟单位
                     if i < n and (exp[i].isalpha() or exp[i] in "_"):
                         ident_start = i
                         # 检查函数调用
-                        while i < n and (exp[i].isalpha() or exp[i] in '_/·'):
-                            if exp[i] in '/·':
+                        while i < n and (exp[i].isalpha() or exp[i] in '_/⋅'):
+                            if exp[i] in '/⋅':
                                 # 检查 / 后面是不是函数调用
                                 j = i + 1
                                 while j < n and exp[j].isalpha():
@@ -124,8 +140,9 @@ class DimCalculatorCore:
                                     break
                             i += 1
                         else:
-                            while i < n and (exp[i].isalpha() or exp[i] in "_/·^"):
-                                if exp[i] in "/·" and i < n-1 and exp[i+1].isdigit():
+                            # 没有函数调用
+                            while i < n and (exp[i].isalpha() or exp[i] in "_/⋅^"):
+                                if exp[i] in "/⋅" and i < n-1 and exp[i+1].isdigit():
                                     break
                                 i += 1
                                 if exp[i-1] == '^':
@@ -151,7 +168,7 @@ class DimCalculatorCore:
         exper = atomize_units(exper)
         loger.debug("atomized: " + exper)
         exper = (exper.replace("÷", "/").replace(":", "/")
-                 .replace("^", "**").replace("·", "*"))  # 与复合单位中/和*区分
+                 .replace("^", "**").replace("⋅", "*"))  # 与复合单位中/和*区分
 
         def insert_mul(exp):
             """补全省略的乘号"""
@@ -231,9 +248,10 @@ class DimCalculatorCore:
                 display_name = unit["display_name"]
                 common = unit["common"]
                 # 注册单位
-                if not hasattr(self.ureg, name):
-                    self.ureg.define(f"{name} = {definition} = {symbol}")
-                    loger.debug("new_define_unit: " + name)
+                if "/" not in symbol:
+                    if not hasattr(self.ureg, name):
+                        self.ureg.define(f"{name} = {definition} = {symbol}")
+                        loger.debug("new_define_unit: " + name)
                 units_list.append((name, display_name, symbol, common))
             # 导入合并单位
             preferred_unit_names = data.get("preferred_units", [])
@@ -447,22 +465,28 @@ class DimCalculatorCore:
     @staticmethod
     def _format_scientific(result: str) -> str:
         """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
-        import re
-
         # 处理科学计数法
+        # \d+(?:\.\d+)?)    捕获组1：数字，可有小数
+        # [eE]    字母e或E
+        # \+?    可选的正号 + 或没有
+        # (-?\d+)    捕获组2：指数，可带负号
         result = re.sub(
             r'(\d+(?:\.\d+)?)[eE]\+?(-?\d+)',
             lambda m: f"{m.group(1)}×10{''.join(SUPER_SCRIPT.get(c, c) for c in m.group(2))}",
             result
         )
         # 处理 ** 指数：优先匹配小数，再匹配整数
+        # \*\*    两个乘号（转义）
+        # (-?\d+(?:\.\d+)?)    捕获组：数字，可有符号和小数
         def replace_power(m):
             exp = m.group(1)
             if '.' in exp:
                 return f"^{exp}"
             else:
                 return ''.join(SUPER_SCRIPT.get(c, c) for c in exp)
-        result = re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result)
+        result = (re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result))
+        result = result.replace("*", "⋅")
+        loger.debug(f"format scientific: {result}")
         return result
 
     @staticmethod
@@ -493,7 +517,7 @@ class DimCalculatorCore:
         """将Quantity的单位转换到通用单位"""
         if isinstance(result, pint.Quantity):
             # 如果是无量纲，直接返回数值
-            loger.debug("original dimensionality: " + str(result.dimensionality))
+            loger.debug(f"original dimensionality: {result.dimensionality}")
             if result.dimensionless:
                 if not result.units in ("rad", "r"):
                     return result.to_base_units().magnitude
@@ -505,9 +529,9 @@ class DimCalculatorCore:
             try:
                 result = result.to_preferred()
             except Exception as e:
-                loger.warning("failed auto to_preferred(): " + str(result) + "  // " + str(e))
+                loger.warning(f"failed auto to_preferred(): {result}  # {e}")
             else:
-                loger.debug("auto to_preferred(): " + str(result))
+                loger.debug(f"auto to_preferred(): {result}")
             finally:
                 if set(result.dimensionality.keys()) == {'[time]'}:
                     if result.dimensionality['[time]'] == -1:
@@ -550,26 +574,26 @@ class DimCalculatorCore:
         loger.debug("final exper: " + exper)
         try:
             result = self._safe_eval(exper)
-            loger.debug("original result: " + str(result))
+            loger.debug(f"original result: {result}")
             # 格式化输出
             if isinstance(result, pint.Quantity):
                 # 紧凑格式：5m 而不是 5 meter
                 try:
                     # 智能格式化数值
                     result = self._to_preferred(result)
-                    loger.debug("to preferred: " + str(result))
+                    loger.debug(f"to preferred: {result}")
                     mag = result.magnitude
                     mag_str = self._round_magnitude(mag)
                     result_str = f"{mag_str}{result.units:~}".replace(" ", "")
                     loger.debug("format: " + result_str)
                 except Exception as e:
-                    loger.warning("failed to format result: " + str(result) + "  // " + str(e))
+                    loger.warning(f"failed to format result:  {str(result)}  # {str(e)}")
                     result_str = str(result).replace(" ", "")
                 # 把1/X改成X^-1的格式
                 result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
             else:
                 result_str = str(self._round_magnitude(result))
-            result_str = result_str
+            result_str = result_str.replace("deg", "°")
             loger.debug("final result: " + result_str)
         except Exception as e:
             # 诊断错误
@@ -579,7 +603,7 @@ class DimCalculatorCore:
             # 记录历史
             self.history.append((original_exper, result_str))
             self.last_ans = result_str
-            return self._format_scientific(result_str).replace("deg", "°"), None  #todo: *·
+            return self._format_scientific(result_str), None
 
     def convert_unit(self, target_unit: str):
         """
@@ -593,7 +617,7 @@ class DimCalculatorCore:
             converted = q.to(target_unit)
             # 格式化输出
             result_str = f"{self._round_magnitude(converted.magnitude)}{converted.units:~}".replace(" ", "")
-            return self._format_scientific(result_str).replace("deg", "°").replace("*", "·"), None
+            return self._format_scientific(result_str), None
         except pint.DimensionalityError:
             return None, f"❌ 单位不匹配：无法将 {self.last_ans} 转换为 {target_unit}"
         except pint.UndefinedUnitError:
