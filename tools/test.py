@@ -5,7 +5,7 @@ sys.path.insert(0, '.')
 from core import DimCalculatorCore
 
 sys.stdout.reconfigure(encoding='utf-8')
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.ERROR,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                     )
 
@@ -59,16 +59,16 @@ def run_all_tests():
 
     # ========== 4. 时间单位 ==========
     print("\n时间单位:")
-    test("60s", "1min")
     test("3600s", "1h")
     test("1h + 30min", "1.5h")
+    test("72h", "3d")
 
     # ========== 5. 单位原子化 ==========
     print("\n单位原子化:")
     test("9.8m/s^2", "9.8m/s²")
     test("3m÷5m·s^-1", "0.6s")
     test("5sin(60°)", "4.33012701892")
-    test("5m÷5mm/min", "1m*min/mm")  # fixme
+    test("5m÷5mm/min", "60000s")
     test("5V/2A", "2.5Ω")
 
     # ========== 6. 导出单位 ==========

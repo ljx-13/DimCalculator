@@ -507,26 +507,35 @@ class DimCalculatorCore:
                 return result
             try:
                 result = result.to_preferred()
-                loger.debug("auto to_preferred(): " + str(result))
             except Exception as e:
-                loger.warning("failed auto to_preferred(): " + str(e))
+                loger.warning("failed auto to_preferred(): " + str(result) + "  // " + str(e))
+            else:
+                loger.debug("auto to_preferred(): " + str(result))
             finally:
                 if set(result.dimensionality.keys()) == {'[time]'}:
-                    mag = abs(result.magnitude)
                     if result.dimensionality['[time]'] == -1:
                         if  "rev" not in str(result.units):
                             result = result.to("Hz")
                     elif result.dimensionality['[time]'] == 1:
-                        if mag >= 3600:
+                        origin = result
+                        result = result.to_base_units()
+                        mag = abs(result.magnitude)
+                        if mag >= 24 * 3600 and mag % 27 == 0:
+                            result = result.to("day")
+                        elif mag >= 3600 and mag % 9 == 0:
                             result = result.to('h')
-                        elif mag >= 60:
-                            result = result.to('min')
+                        # elif mag >= 60 and mag % 3 == 0:
+                        #     result = result.to('min')
+                # if "e" not in str(result.magnitude) and "." in str(result.magnitude):
+                #     if "." in str(origin.magnitude):
+                #         if len(str(result.magnitude).split('.')[1]) > 10 > len(str(origin.magnitude).split('.')[1]):
+                #             # 化简完为不整齐小数，使用原结果
+                #             result = origin
+                #     else:
+                #         result = origin
                 for u in self.preferred_units:
-                    # if result == "49kg*m/s²/m²":
-                    #     breakpoint()
-                    #     print(u, result, result.check(u))
                     if result.check(u):
-                        loger.warning("unauto to_preferred(): " + u)
+                        loger.warning("nonauto to_preferred(): " + u)
                         result = result.to(u)
                 return result
         else:
@@ -556,8 +565,8 @@ class DimCalculatorCore:
                     mag_str = self._round_magnitude(mag)
                     result_str = f"{mag_str}{result.units:~}".replace(" ", "")
                     loger.debug("format: " + result_str)
-                except:
-                    loger.warning("failed to format result: " + str(result))
+                except Exception as e:
+                    loger.warning("failed to format result: " + str(result) + "  // " + str(e))
                     result_str = str(result).replace(" ", "")
                 # 把1/X改成X^-1的格式
                 result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
