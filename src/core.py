@@ -500,7 +500,6 @@ class DimCalculatorCore:
                 if not result.units in ("rad", "r"):
                     return result.to_base_units().magnitude
             unit = str(result.units)
-            # print(unit)
             if "liter" in unit:
                 if result.magnitude >= 1000:
                     result = result.to('liter')
@@ -517,15 +516,15 @@ class DimCalculatorCore:
                         if  "rev" not in str(result.units):
                             result = result.to("Hz")
                     elif result.dimensionality['[time]'] == 1:
-                        origin = result
-                        result = result.to_base_units()
-                        mag = abs(result.magnitude)
-                        if mag >= 24 * 3600 and mag % 27 == 0:
-                            result = result.to("day")
-                        elif mag >= 3600 and mag % 9 == 0:
-                            result = result.to('h')
-                        # elif mag >= 60 and mag % 3 == 0:
-                        #     result = result.to('min')
+                        if result.units not in ("ms", "min", "d"):
+                            result = result.to_base_units()
+                            mag = abs(result.magnitude)
+                            if mag >= 24 * 3600 and mag % 27 == 0:
+                                result = result.to("day")
+                            elif mag >= 3600 and mag % 9 == 0:
+                                result = result.to('h')
+                            elif mag <= 0.01:
+                                result = result.to('ms')
                 # if "e" not in str(result.magnitude) and "." in str(result.magnitude):
                 #     if "." in str(origin.magnitude):
                 #         if len(str(result.magnitude).split('.')[1]) > 10 > len(str(origin.magnitude).split('.')[1]):

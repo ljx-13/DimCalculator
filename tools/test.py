@@ -60,6 +60,7 @@ def run_all_tests():
     # ========== 4. 时间单位 ==========
     print("\n时间单位:")
     test("3600s", "1h")
+    test("3601s", "3601s")
     test("1h + 30min", "1.5h")
     test("72h", "3d")
 
