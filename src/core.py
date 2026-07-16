@@ -1,4 +1,3 @@
-import os
 from typing import List, Tuple
 from functools import lru_cache
 import logging
@@ -83,15 +82,16 @@ class DimCalculatorCore:
         def atomize_units(exp) -> str:
             """把单位原子化，如 5V/3A -> (5V)/(3A)，防止计算优先级错误"""
             # 原子化：数字 + 字母（可能带数字后缀，如 m2, m3）
+            is_digit_or_dot = lambda x: x.isdigit() or x == '.'
             new = []
             i = 0
             n = len(exp)
             while i < n:
                 ch = exp[i]
-                if ch.isdigit() or ch == '.':
+                if is_digit_or_dot(ch):
                     start = i
                     # 收集数字（包括科学计数法）
-                    while i < n and (exp[i].isdigit() or exp[i] == '.'):
+                    while i < n and is_digit_or_dot(exp[i]):
                         i += 1
                     if i < n and exp[i] in 'eE':
                         i += 1
@@ -125,16 +125,14 @@ class DimCalculatorCore:
                             i += 1
                         else:
                             while i < n and (exp[i].isalpha() or exp[i] in "_/·^"):
-                                if exp[i] in "/·" and i < n - 1 and exp[i + 1].isdigit():
+                                if exp[i] in "/·" and i < n-1 and exp[i+1].isdigit():
                                     break
-                                if exp[i] == '^':
-                                    i += 1
+                                i += 1
+                                if exp[i-1] == '^':
                                     if i < n and exp[i] in '+-':
                                         i += 1
-                                    while i < n and exp[i].isdigit():
+                                    while i < n and is_digit_or_dot(exp[i]):
                                         i += 1
-                                else:
-                                    i += 1
                             # 允许字母后面跟数字（如 m2, m3）
                             while i < n and exp[i].isdigit():
                                 i += 1
@@ -222,8 +220,6 @@ class DimCalculatorCore:
 
     def _load_units(self, filename) -> list:
         """导入单位，自动注册，返回中文名。"""
-        # self.auto_preferred_units = []
-        print("///", filename, os.getcwd())
         try:
             with open(filename, 'r', encoding="utf-8") as f:
                 data = json.load(f)
