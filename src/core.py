@@ -1,3 +1,4 @@
+import os
 from typing import List, Tuple
 from functools import lru_cache
 import logging
@@ -222,6 +223,7 @@ class DimCalculatorCore:
     def _load_units(self, filename) -> list:
         """导入单位，自动注册，返回中文名。"""
         # self.auto_preferred_units = []
+        print("///", filename, os.getcwd())
         try:
             with open(filename, 'r', encoding="utf-8") as f:
                 data = json.load(f)

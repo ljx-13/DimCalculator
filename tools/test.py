@@ -1,6 +1,5 @@
 import logging
 import sys
-sys.path.insert(0, '.')
 
 from core import DimCalculatorCore
 
@@ -180,7 +179,6 @@ def run_all_tests():
 
     # ========== 19. 单位转换 ==========
     print("\n单位转换 (convert_unit):")
-    calc = DimCalculatorCore()
     calc.evaluate("10m")
     result, error = calc.convert_unit("cm")
     if error is None:
@@ -195,13 +193,3 @@ def run_all_tests():
 
 if __name__ == "__main__":
     run_all_tests()
-    # import sys
-    #
-    # sys.path.insert(0, '.')
-    #
-    # from core import DimCalculatorCore
-    #
-    # calc = DimCalculatorCore()
-    # result, error = calc.evaluate("_g * 5*kg")
-    # print(f"结果: {result}")
-    # print(f"错误: {error}")
