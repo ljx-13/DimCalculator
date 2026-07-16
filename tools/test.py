@@ -40,35 +40,35 @@ def run_all_tests():
     test("10-3", "7")
     test("2*6", "12")
     test("15/3", "5")
-    test("2**10", "1024")
+    test("2^10", "1024")
     test("(3+5)*2", "16")
 
     # ========== 2. 长度单位 ==========
     print("\n长度单位:")
-    test("5*m + 20*cm", "5.2m")
-    test("1*km + 500*m", "1500m")
-    test("100*cm", "1m")
-    test("1000*mm", "1m")
-    test("1*km / 2", "500m")
+    test("5m + 20cm", "5.2m")
+    test("1km + 500m", "1500m")
+    test("100cm", "1m")
+    test("1000mm", "1m")
+    test("1km / 2", "500m")
 
     # ========== 3. 质量单位 ==========
     print("\n质量单位:")
-    test("1*kg + 500*g", "1.5kg")
-    test("1000*g", "1kg")
-    test("2*kg * 3", "6kg")
+    test("1kg + 500g", "1.5kg")
+    test("1000g", "1kg")
+    test("2kg * 3", "6kg")
 
     # ========== 4. 时间单位 ==========
     print("\n时间单位:")
-    test("60*s", "1min")
-    test("3600*s", "1h")
-    test("1*h + 30*min", "1.5h")
+    test("60s", "1min")
+    test("3600s", "1h")
+    test("1h + 30min", "1.5h")
 
     # ========== 5. 单位原子化 ==========
     print("\n单位原子化:")
-    test("9.8*m/s**2", "9.8m/s²")
+    test("9.8m/s^2", "9.8m/s²")
     test("3m÷5m·s^-1", "0.6s")
     test("5sin(60°)", "4.33012701892")
-    test("5m÷5mm/min", "1m*min/mm")
+    test("5m÷5mm/min", "1m*min/mm")  # fixme
     test("5V/2A", "2.5Ω")
 
     # ========== 6. 导出单位 ==========
@@ -81,7 +81,6 @@ def run_all_tests():
     test("2A * 5Ω", "10V")
     test("10V * 2A", "20W")
     test("10÷2s", "5Hz")
-    test("7200h", "2s")
     test("5km/m", "5000")
 
     # ========== 7. 物理常数 ==========
@@ -127,43 +126,44 @@ def run_all_tests():
     # ========== 11. 常用体积单位 ==========
     print("\n体积单位:")
     test("1mL", "1ml")
-    test("1000*mL", "1l")
+    test("1000mL", "1l")
 
     # ========== 12. 温度 ==========
     print("\n温度:")
-    test("25*degC", "25°C")
+    test("25degC", "25°C")
     # test("273.15*K", "-0°C")
     # 温差
-    test("100*degC - 20*degC", "80Δ°C")
+    test("100degC - 20degC", "80Δ°C")
 
     # ========== 13. ans / last_ans ==========
     print("\n上一次结果 (ans):")
     test("10m")
     test("ans * 2", "20m")
-    test("ans + 5*m", "25m")
+    test("ans + 5m", "25m")
 
     # ========== 14. 幂运算 ==========
     print("\n幂运算:")
-    test("2**3", "8")
-    test("10**2", "100")
-    test("(2*m)**3", "8m³")
+    test("2^3", "8")
+    test("10^2", "100")
+    test("(2m)^3", "8m³")
+    test("2m^3", "2m³")
 
     # ========== 15. 括号 ==========
     print("\n括号:")
     test("(3+5)*(2+4)", "48")
-    test("(10*m)/(2*s)", "5m/s")
+    test("(10m)/(2s)", "5m/s")
 
     # ========== 16. 科学计数法 ==========
     print("\n科学计数法:")
     test("1e3", "1000")
     test("1e-3", "001")
-    test("1e3*m", "1000m")
+    test("1e3m", "1000m")
 
     # ========== 17. 错误诊断 ==========
     print("\n错误诊断:")
-    test("5*m + 10*s", should_error=True)
-    test("10*kg + 5*m", should_error=True)
-    test("5*xyz", should_error=True)
+    test("5m + 10s", should_error=True)
+    test("10kg + 5m", should_error=True)
+    test("5xyz", should_error=True)
     test("sqrt(-1)", should_error=True)
     test("log(0)", should_error=True)
     test("asin(2)", should_error=True)
@@ -171,19 +171,19 @@ def run_all_tests():
 
     # ========== 18. 混合表达式 ==========
     print("\n混合表达式:")
-    test("sqrt(100*m**2)", "10m")
-    test("_g * 10*kg * 2*m", "196J")
-    test("100*W * 5*s", "500J")
-    test("sin(30*deg) + cos(60*deg)", "1")
+    test("sqrt(100m^2)", "10m")
+    test("_g * 10kg * 2m", "196J")
+    test("100W * 5s", "500J")
+    test("sin(30deg) + cos(60deg)", "1")
     # test("(10*kg * 9.8*m/s**2) / (2*m**2)", "49Pa")
 
     # ========== 19. 单位转换 ==========
     print("\n单位转换 (convert_unit):")
     calc = DimCalculatorCore()
-    calc.evaluate("10*m")
+    calc.evaluate("10m")
     result, error = calc.convert_unit("cm")
     if error is None:
-        print(f"10*m → cm: {result}")
+        print(f"10m → cm: {result}")
     else:
         print(f"单位转换测试跳过: {error}", file=sys.stderr)
 

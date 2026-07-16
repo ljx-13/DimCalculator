@@ -123,12 +123,19 @@ class DimCalculatorCore:
                                     break
                             i += 1
                         else:
-                            while i < n and (exp[i].isalpha() or exp[i] in "_/·^+-"):
-                                if exp[i] in "/·+-" and i < n-1 and (exp[i+1].isdigit() or exp[i+1] in "_+-"):
+                            while i < n and (exp[i].isalpha() or exp[i] in "_/·^"):
+                                if exp[i] in "/·" and i < n - 1 and exp[i + 1].isdigit():
                                     break
-                                i += 1
+                                if exp[i] == '^':
+                                    i += 1
+                                    if i < n and exp[i] in '+-':
+                                        i += 1
+                                    while i < n and exp[i].isdigit():
+                                        i += 1
+                                else:
+                                    i += 1
                             # 允许字母后面跟数字（如 m2, m3）
-                            while i < n and (exp[i].isdigit() or exp[i] in "+-"):
+                            while i < n and exp[i].isdigit():
                                 i += 1
                         ident = exp[ident_start:i]
 
@@ -145,7 +152,7 @@ class DimCalculatorCore:
         exper = atomize_units(exper)
         loger.debug("atomized: " + exper)
         exper = (exper.replace("÷", "/").replace(":", "/")
-                 .replace("^", "**").replace("·", "*"))  # 与复合单位中/区分
+                 .replace("^", "**").replace("·", "*"))  # 与复合单位中/和*区分
 
         def insert_mul(exp):
             """补全省略的乘号"""
