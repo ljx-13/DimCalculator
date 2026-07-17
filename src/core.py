@@ -38,7 +38,7 @@ class DimCalculatorCore:
     def processed(self, exper):
         """处理输入"""
         # 替换输入字符串中的部分字符
-        exper = (exper.replace("×", "*").replace("××", "* *")
+        exper = (exper.replace("×", "*").replace("××", "* *").replace("⋅", "·")
                  .replace("\\", "/")
                  .replace("[", "(").replace("]", ")").replace("{", "(").replace("}", ")")
                  .replace("√(", "sqrt(").replace("%", "/100")
@@ -55,7 +55,7 @@ class DimCalculatorCore:
         exper = exper.replace("*10^", "e")
         def replace_if_surrounded_by_math(exp, sym: str, name: str):
             """替换数学符号及数字中的exp"""
-            allowed = set("0123456789+-*/^%!()[]{}×÷⋅: \t_")
+            allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")
             result = []
             i = 0
             n = len(exp)
@@ -99,15 +99,15 @@ class DimCalculatorCore:
                 ch = exp[i]
                 if is_digit_or_dot(ch):
                     start = i
-                    # 收集数字（包括科学计数法）
+                    # 收集数字
                     while i < n and is_digit_or_dot(exp[i]):
                         i += 1
-                    if i < n and exp[i] in 'eE':
-                        i += 1
-                        if i < n and exp[i] in '+-':
-                            i += 1
-                        while i < n and exp[i].isdigit():
-                            i += 1
+                    # if i < n and exp[i] in 'eE':
+                    #     i += 1
+                    #     if i < n and exp[i] in '+-':
+                    #         i += 1
+                    #     while i < n and exp[i].isdigit():
+                    #         i += 1
                     # 处理 ^ 指数（如 10^-34）
                     if i < n and exp[i] == '^':
                         i += 1
@@ -121,8 +121,8 @@ class DimCalculatorCore:
                     if i < n and (exp[i].isalpha() or exp[i] in "_"):
                         ident_start = i
                         # 检查函数调用
-                        while i < n and (exp[i].isalpha() or exp[i] in '_/⋅'):
-                            if exp[i] in '/⋅':
+                        while i < n and (exp[i].isalpha() or exp[i] in '_/·'):
+                            if exp[i] in '/·':
                                 # 检查 / 后面是不是函数调用
                                 j = i + 1
                                 while j < n and exp[j].isalpha():
@@ -141,8 +141,8 @@ class DimCalculatorCore:
                             i += 1
                         else:
                             # 没有函数调用
-                            while i < n and (exp[i].isalpha() or exp[i] in "_/⋅^"):
-                                if exp[i] in "/⋅" and i < n-1 and exp[i+1].isdigit():
+                            while i < n and (exp[i].isalpha() or exp[i] in "_/·^"):
+                                if exp[i] in "/·" and i < n-1 and exp[i+1].isdigit():
                                     break
                                 i += 1
                                 if exp[i-1] == '^':
@@ -168,7 +168,7 @@ class DimCalculatorCore:
         exper = atomize_units(exper)
         loger.debug("atomized: " + exper)
         exper = (exper.replace("÷", "/").replace(":", "/")
-                 .replace("^", "**").replace("⋅", "*"))  # 与复合单位中/和*区分
+                 .replace("^", "**").replace("·", "*"))  # 与复合单位中/和*区分
 
         def insert_mul(exp):
             """补全省略的乘号"""
