@@ -1,7 +1,6 @@
 import json
 import os
 import traceback
-import webbrowser
 from functools import wraps
 import logging
 
