@@ -2,7 +2,7 @@
     "consts": [
         { "name": "pi", "display_name": "圆周率", "symbol": "π", "value": "3.141592653589793" },
         { "name": "e", "display_name": "自然常数", "symbol": "e", "value": "2.718281828459045" },
-        { "name": "_g", "display_name": "重力加速度", "symbol": "g", "value": "9.8*m/s**2" },
+        { "name": "_g", "display_name": "重力加速度", "symbol": "g", "value": "9.80665*m/s**2" },
         { "name": "_c", "display_name": "光速", "symbol": "c", "value": "299792458*m/s" },
         { "name": "_G", "display_name": "万有引力常数", "symbol": "G", "value": "6.67430e-11*m**3/kg/s**2" },
         { "name": "_h", "display_name": "普朗克常数", "symbol": "h", "value": "6.62607015e-34*J*s" },
