@@ -8,7 +8,7 @@ from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QPushButton, \
     QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog, QAction, QTextBrowser
 # from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 from .core import DimCalculatorCore
 
@@ -31,16 +31,20 @@ class DimCalculatorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.core = DimCalculatorCore()
-        self.is_convert_mode = False  # 标记是否处于单位转换模式
+        self.is_convert_mode = False  # 标记是否处于单位转换模式]
+        self.is_convert_mode = False
+        self.unit_buttons = []  # 新增：存储单位按钮
+        self.const_buttons = []  # 新增：存储常数按钮
+        self.unit_cols = 3  # 新增：当前列数
+        self.const_cols = 3  # 新增：当前列数
         self.initUI()
-        self.check_first_run()
+        QTimer.singleShot(100, self.update_button_layout)
 
     @catch_exceptions("初始化窗口时崩溃")
     def initUI(self):  # todo: 欢迎
         self.setWindowTitle("DimCalculator - 智能量纲计算器")
-        self.setMinimumSize(725, 725)
-        self.setMaximumWidth(1000)
-        self.setBaseSize(725, 725)
+        self.setMinimumSize(800, 750)
+        # self.setMaximumWidth(1250)
         self.setWindowIcon(QIcon("datas/icon.ico"))
         self.setStyleSheet("""
             QMainWindow { background-color: #f3f3f3; }
@@ -115,9 +119,9 @@ class DimCalculatorGUI(QMainWindow):
         content_layout.setSpacing(20)
 
         # 左侧：数字与运算符网格
+        left_widget = QWidget()
         left_grid = QGridLayout()
         left_grid.setSpacing(8)
-
         buttons = [
             ('单位转换', 0, 0, True, '将结果转换到目标单位'), ('(', 0, 1, True, ''), (')', 0, 2, True, ''), ('⌫', 0, 3, True, '退格'),
             ('CE', 1, 0, True, '清除输入'), ('∧', 1, 1, True, '幂运算'), ('√', 1, 2, True, '平方根'), ('÷', 1, 3, True, ''),
@@ -126,7 +130,6 @@ class DimCalculatorGUI(QMainWindow):
             ('1', 4, 0, False, ''), ('2', 4, 1, False, ''), ('3', 4, 2, False, ''), ('+', 4, 3, True, ''),
             ('ans', 5, 0, True, '插入上一次计算结果'), ('0', 5, 1, False, ''), ('.', 5, 2, False, ''), ('=', 5, 3, True, ''),
         ]
-
         for text, row, col, is_op, tip in buttons:
             btn = QPushButton(text)
             if text == "单位转换":
@@ -138,6 +141,9 @@ class DimCalculatorGUI(QMainWindow):
             btn.setToolTip(tip)
             btn.clicked.connect(self.on_button_clicked)
             left_grid.addWidget(btn, row, col)
+        left_widget.setLayout(left_grid)
+        left_widget.setMaximumWidth(600)
+        left_widget.setMaximumHeight(800)
 
         # 右侧面板（单位、常数、函数）
         right_tabs = QTabWidget()
@@ -145,22 +151,25 @@ class DimCalculatorGUI(QMainWindow):
 
         # 单位面板
         unit_widget = QWidget()
-        unit_layout = QGridLayout(unit_widget)
+        self.unit_layout = QGridLayout(unit_widget)  # 保存为实例变量
+        self.unit_widget = unit_widget  # 保存为实例变量
         row, col = 0, 0
         if not self.core.units:
             label = QLabel("单位配置文件导入错误\n请检查 datas/units.json")
             label.setAlignment(Qt.AlignCenter)
             right_tabs.addTab(label, "单位")
         else:
+            self.unit_buttons = []  # 清空按钮列表
             for name, display_name, symbol, common in self.core.units:
                 if common:
                     btn = QPushButton(symbol)
                     btn.setObjectName("unitBtn")
-                    btn.setToolTip(display_name)  # 悬停显示内部符号
+                    btn.setToolTip(display_name)
                     btn.clicked.connect(lambda checked, s=symbol: self.handle_unit_click(s))
-                    unit_layout.addWidget(btn, row, col)
+                    self.unit_buttons.append(btn)  # 存储按钮
+                    self.unit_layout.addWidget(btn, row, col)
                     col += 1
-                    if col >= 3:
+                    if col >= 3:  # 初始3列
                         col = 0
                         row += 1
             # 添加滚动区域
@@ -173,24 +182,27 @@ class DimCalculatorGUI(QMainWindow):
 
         # 常数面板
         const_widget = QWidget()
-        unit_layout = QGridLayout(const_widget)
+        self.const_layout = QGridLayout(const_widget)  # 保存为实例变量
+        self.const_widget = const_widget  # 保存为实例变量
         row, col = 0, 0
         if not self.core.consts:
             label = QLabel("常数配置文件导入错误\n请检查 datas/consts.json")
             label.setAlignment(Qt.AlignCenter)
             right_tabs.addTab(label, "常数")
         else:
+            self.const_buttons = []  # 清空按钮列表
             for name, display_name, symbol, value in self.core.consts:
                 btn = QPushButton(symbol)
                 btn.setObjectName("unitBtn")
-                btn.setToolTip(display_name)  # 悬停显示内部符号
+                btn.setToolTip(display_name)
                 btn.clicked.connect(
                     lambda checked, s=symbol, n=name:
                     self.expr_edit.insert("_" + s) if n not in ("pi", "e") else self.expr_edit.insert(s)
                 )
-                unit_layout.addWidget(btn, row, col)
+                self.const_buttons.append(btn)  # 存储按钮
+                self.const_layout.addWidget(btn, row, col)
                 col += 1
-                if col >= 3:
+                if col >= 3:  # 初始3列
                     col = 0
                     row += 1
             # 添加滚动区域
@@ -201,7 +213,7 @@ class DimCalculatorGUI(QMainWindow):
             scroll.setMinimumWidth(250)
             right_tabs.addTab(scroll, "常数")
 
-        # 函数面板
+        # 函数面板  todo: 拉伸统一，复用代码
         func_widget = QWidget()
         func_layout = QGridLayout(func_widget)
         functions = {"sin": "正弦函数", "cos": "余弦函数", "tan": "正切函数",
@@ -220,14 +232,14 @@ class DimCalculatorGUI(QMainWindow):
                 row += 1
         right_tabs.addTab(func_widget, "函数")
 
-        content_layout.addLayout(left_grid, 3)
-        content_layout.addWidget(right_tabs, 1)
+        content_layout.addWidget(left_widget, 3)
+        content_layout.addWidget(right_tabs, 2)
         main_layout.addLayout(content_layout)
 
         # 诊断/步骤信息区
         self.info_text = QTextEdit()
         self.info_text.setReadOnly(True)
-        self.info_text.setMaximumHeight(250)
+        self.info_text.setMaximumHeight(300)
         main_layout.addWidget(self.info_text)
 
         # 历史记录按钮
@@ -247,7 +259,94 @@ class DimCalculatorGUI(QMainWindow):
         help_action.triggered.connect(self.open_help)
         help_menu.addAction(help_action)
 
-        self.resize(725, 725)
+        self.resize(800, 750)
+
+    def update_button_layout(self):
+        """根据窗口宽度动态更新按钮列数"""
+        tab_widget = self.findChild(QTabWidget)
+        if not tab_widget:
+            return
+
+        # 获取当前标签页的宽度
+        tab_width = tab_widget.width() - 20
+
+        # 根据宽度计算列数（每个按钮约60-70px）
+        for i in range(1, 10):
+            if tab_width < 100 * i + 50:
+                new_cols = i
+                break
+        else:
+            new_cols = 10
+
+        # 更新单位面板
+        if hasattr(self, 'unit_buttons') and self.unit_buttons:
+            if new_cols != self.unit_cols:
+                self.unit_cols = new_cols
+                self._reflow_buttons(self.unit_layout, self.unit_buttons, new_cols)
+            else:
+                # 列数不变，但窗口大小变了，仍需调整按钮大小
+                self._reflow_buttons(self.unit_layout, self.unit_buttons, new_cols)
+
+        # 更新常数面板
+        if hasattr(self, 'const_buttons') and self.const_buttons:
+            if new_cols != self.const_cols:
+                self.const_cols = new_cols
+                self._reflow_buttons(self.const_layout, self.const_buttons, new_cols)
+            else:
+                self._reflow_buttons(self.const_layout, self.const_buttons, new_cols)
+
+    def _reflow_buttons(self, layout, buttons, cols):
+        """重新排列按钮到指定列数，并调整按钮大小保持圆形"""
+        # 清空布局
+        while layout.count():
+            layout.takeAt(0)
+
+        # 获取可用宽度
+        tab_widget = self.findChild(QTabWidget)
+        if tab_widget:
+            available_width = tab_widget.width() - 30  # 减去内边距
+        else:
+            available_width = 300
+
+        # 计算按钮大小（保持正方形）
+        spacing = 7
+        if available_width > 1000:
+            btn_size = (available_width - spacing * (cols - 1)) // cols - 20
+            btn_size = max(40, btn_size)
+            btn_size = min(100, btn_size)
+        else:
+            btn_size = 70
+
+        row, col = 0, 0
+        for btn in buttons:
+            btn.setFixedSize(btn_size, btn_size)
+            # 根据文本长度动态调整字体大小
+            text_len = len(btn.text())
+            if text_len >=10:
+                font_size = max(10, btn_size // 6)
+            elif text_len >= 8:
+                font_size = max(10, btn_size // 5)
+            elif text_len >= 6:
+                font_size = max(10, btn_size // 4)  # 很长时更小
+            elif text_len >= 4:
+                font_size = max(12, btn_size // 3)
+            else:
+                font_size = max(14, btn_size // 3)
+            btn.setStyleSheet(f"""
+                QPushButton#unitBtn {{
+                    border-radius: {btn_size // 2}px;
+                    min-width: {btn_size}px;
+                    min-height: {btn_size}px;
+                    max-width: {btn_size}px;
+                    max-height: {btn_size}px;
+                    font-size: {font_size}px;
+                }}
+            """)
+            layout.addWidget(btn, row, col)
+            col += 1
+            if col >= cols:
+                col = 0
+                row += 1
 
     @catch_exceptions("处理单位输入时崩溃")
     def handle_unit_click(self, symbol):
@@ -488,6 +587,12 @@ class DimCalculatorGUI(QMainWindow):
                 config["first_run"] = False
                 with open(config_path, "w", encoding="utf-8") as f:
                     json.dump(config, f, ensure_ascii=False, indent=4)
+
+    def resizeEvent(self, event):
+        """窗口尺寸变化时触发"""
+        super().resizeEvent(event)
+        # 延迟执行，确保布局已完成调整
+        QTimer.singleShot(10, self.update_button_layout)
 
     def closeEvent(self, event):
         event.accept()

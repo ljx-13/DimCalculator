@@ -1,4 +1,4 @@
-DEBUG = False
+DEBUG = True
 if DEBUG:
     import cProfile
     import pstats
@@ -77,6 +77,7 @@ if __name__ == '__main__':
             window = DimCalculatorGUI()
             window.show()
             splash.finish(window)
+            window.check_first_run()
         QTimer.singleShot(0, load_main_window)
         # window = DimCalculatorGUI()
         # window.show()
