@@ -1,10 +1,12 @@
+import os
 import traceback
+import webbrowser
 from functools import wraps
 import logging
 
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QPushButton, \
-    QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog
+    QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog, QAction, QTextBrowser
 # from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 
@@ -35,13 +37,20 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("初始化窗口时崩溃")
     def initUI(self):  # todo: 欢迎
         self.setWindowTitle("DimCalculator - 智能量纲计算器")
-        self.setMinimumSize(700, 700)
-        # raise SyntaxError
+        self.setMinimumSize(725, 725)
         self.setMaximumWidth(1000)
-        self.setBaseSize(700, 700)
+        self.setBaseSize(725, 725)
         self.setWindowIcon(QIcon("datas/icon.ico"))
         self.setStyleSheet("""
             QMainWindow { background-color: #f3f3f3; }
+            QMenuBar {
+                background-color: #f3f3f3;
+                border: none;
+                color: #333;
+            }
+            QMenuBar::item:selected {
+                background-color: #e0e0e0;
+            }
             QLineEdit#exprEdit {
                 font-size: 20px;
                 color: #505050;
@@ -217,7 +226,7 @@ class DimCalculatorGUI(QMainWindow):
         # 诊断/步骤信息区
         self.info_text = QTextEdit()
         self.info_text.setReadOnly(True)
-        self.info_text.setMaximumHeight(120)
+        self.info_text.setMaximumHeight(250)
         main_layout.addWidget(self.info_text)
 
         # 历史记录按钮
@@ -226,7 +235,14 @@ class DimCalculatorGUI(QMainWindow):
         hist_btn.clicked.connect(self.show_history)
         main_layout.addWidget(hist_btn)
 
-        self.resize(700, 700)
+        # 菜单栏
+        menubar = self.menuBar()
+        help_menu = menubar.addMenu("帮助")
+        help_action = QAction("使用帮助", self)
+        help_action.triggered.connect(self.open_help)
+        help_menu.addAction(help_action)
+
+        self.resize(725, 725)
 
     @catch_exceptions("处理单位输入时崩溃")
     def handle_unit_click(self, symbol):
@@ -331,6 +347,54 @@ class DimCalculatorGUI(QMainWindow):
             QMessageBox.information(dialog, "提示", "历史记录已清空")
         clear_btn.clicked.connect(clear_history)
         dialog.exec_()
+
+    def open_help(self):
+        help_path = os.path.join(os.path.dirname(__file__), "..", "docs", "help.md")
+        try:
+            with open(help_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            QMessageBox.warning(self, "提示", f"帮助文件加载失败: {e}")
+        else:
+            dialog = QDialog(self)
+            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            dialog.setWindowTitle("使用帮助")
+            dialog.resize(700, 700)
+            layout = QVBoxLayout(dialog)
+            text_browser = QTextBrowser()
+            text_browser.setReadOnly(True)
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: white;
+                }
+                QTextBrowser {
+                    background-color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 20px;
+                    font-size: 18px;
+                    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+                    line-height: 1.8;
+                }
+                QScrollBar:vertical {
+                    background: transparent;
+                    width: 8px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #d0d0d0;
+                    border-radius: 4px;
+                    min-height: 30px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background: #b0b0b0;
+                }
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                    height: 0px;
+                }
+            """)
+            text_browser.setMarkdown(content)
+            layout.addWidget(text_browser)
+            dialog.exec_()
 
     def closeEvent(self, event):
         event.accept()
