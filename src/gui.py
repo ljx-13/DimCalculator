@@ -1,3 +1,4 @@
+import json
 import os
 import traceback
 import webbrowser
@@ -33,6 +34,7 @@ class DimCalculatorGUI(QMainWindow):
         self.core = DimCalculatorCore()
         self.is_convert_mode = False  # 标记是否处于单位转换模式
         self.initUI()
+        self.check_first_run()
 
     @catch_exceptions("初始化窗口时崩溃")
     def initUI(self):  # todo: 欢迎
@@ -237,8 +239,12 @@ class DimCalculatorGUI(QMainWindow):
 
         # 菜单栏
         menubar = self.menuBar()
+
         help_menu = menubar.addMenu("帮助")
-        help_action = QAction("使用帮助", self)
+        welcome_action = QAction("欢迎", self)
+        welcome_action.triggered.connect(self.show_welcome)
+        help_menu.addAction(welcome_action)
+        help_action = QAction("用户手册", self)
         help_action.triggered.connect(self.open_help)
         help_menu.addAction(help_action)
 
@@ -349,16 +355,17 @@ class DimCalculatorGUI(QMainWindow):
         dialog.exec_()
 
     def open_help(self):
+        """打开帮助窗口"""
         help_path = os.path.join(os.path.dirname(__file__), "..", "docs", "help.md")
         try:
             with open(help_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
-            QMessageBox.warning(self, "提示", f"帮助文件加载失败: {e}")
+            QMessageBox.warning(self, "提示", f"用户手册加载失败: {e}")
         else:
             dialog = QDialog(self)
             dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-            dialog.setWindowTitle("使用帮助")
+            dialog.setWindowTitle("用户手册")
             dialog.resize(700, 700)
             layout = QVBoxLayout(dialog)
             text_browser = QTextBrowser()
@@ -395,6 +402,93 @@ class DimCalculatorGUI(QMainWindow):
             text_browser.setMarkdown(content)
             layout.addWidget(text_browser)
             dialog.exec_()
+
+    def show_welcome(self):
+        """打开欢迎窗口"""
+        dialog = QDialog(self)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setWindowTitle("欢迎使用 DimCalculator")
+        dialog.resize(500, 380)
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: white;
+            }
+            QLabel {
+                font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            }
+        """)
+
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(15)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        # 标题
+        title = QLabel("DimCalculator")
+        title.setStyleSheet("font-size: 28px; font-weight: bold; color: #0078d7;")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        # 副标题
+        subtitle = QLabel("智能量纲计算器")
+        subtitle.setStyleSheet("font-size: 18px; color: #666;")
+        subtitle.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle)
+
+        # 分隔线
+        line = QLabel("─" * 30)
+        line.setStyleSheet("color: #ddd; font-size: 12px;")
+        line.setAlignment(Qt.AlignCenter)
+        layout.addWidget(line)
+
+        # 功能介绍
+        desc = QLabel(
+            "支持带单位的表达式运算\n"
+            "例如：5m + 20cm = 5.2m\n\n"
+            "内置物理常数：_g, _c, _h ...\n"
+            "支持数学函数：sin, cos, tan\n\n"
+            "点击「帮助/用户手册」菜单可查看完整说明"
+        )
+        desc.setStyleSheet("font-size: 16px; color: #444; line-height: 1.8;")
+        desc.setAlignment(Qt.AlignLeft)
+        layout.addWidget(desc)
+
+        layout.addStretch()
+
+        # 按钮
+        btn = QPushButton("开始使用")
+        btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 0;
+                font-size: 20px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #005a9e;
+            }
+        """)
+        btn.clicked.connect(dialog.accept)
+        layout.addWidget(btn)
+
+        dialog.exec_()
+
+    def check_first_run(self):
+        """第一次运行时弹出欢迎窗口"""
+        config_path = os.path.join(os.path.dirname(__file__), "..", "datas", "config.json")
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception as e:
+            logging.warning(f"首次启动检查失败: {e}")
+        else:
+            if config.get("first_run", True):
+                self.show_welcome()
+                config["first_run"] = False
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(config, f, ensure_ascii=False, indent=4)
 
     def closeEvent(self, event):
         event.accept()

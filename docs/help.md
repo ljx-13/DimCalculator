@@ -1,4 +1,4 @@
-# DimCalculator 使用帮助
+# DimCalculator 用户手册
 
 ---
 
