@@ -6,7 +6,7 @@ import math
 import json
 import re
 
-FUNC_NAMES = {'sin', 'cos', 'tan', 'log', 'lg', 'ln', 'abs', 'sqrt'}
+# FUNC_NAMES = {'sin', 'cos', 'tan', 'log', 'lg', 'ln', 'abs', 'sqrt'}
 SUPER_SCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
                        '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', }
 
@@ -49,166 +49,171 @@ class DimCalculatorCore:
         map_ = {k: v for v, k in SUPER_SCRIPT.items()}
         exper = re.sub(
             r'[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+',
-            lambda m: '^' + ''.join(map_[c] for c in m.group()),
+            lambda m: '^' + ''.join(map_[c_] for c_ in m.group()),
             exper
         )
         exper = exper.replace("*10^", "e")
-        def replace_if_surrounded_by_math(exp, sym: str, name: str):
-            """替换数学符号及数字中的exp"""
-            allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")
-            result = []
-            i = 0
-            n = len(exp)
-            sym_len = len(sym)
-            while i < n:
-                pos = exp.find(sym, i)
-                if pos == -1:
-                    result.append(exp[i:])
-                    break
-                before_char = exp[pos - 1] if pos > 0 else '^'
-                after_char = exp[pos + sym_len] if pos + sym_len < n else '$'
-                before_ok = (pos == 0) or (before_char in allowed)
-                after_ok = (pos + sym_len == n) or (after_char in allowed)
-                if before_ok and after_ok:
-                    result.append(exp[i:pos])
-                    result.append(name)
-                else:
-                    result.append(exp[i:pos + sym_len])
-                i = pos + sym_len
-            return ''.join(result)
 
         # 替换单位符号和常量
         for (name, dn, symbol, c) in self.units:
             if '/' not in symbol:
-                exper = replace_if_surrounded_by_math(exper, symbol, name)
+                exper = self._replace_if_surrounded_by_math(exper, symbol, name)
         for (name, dn, symbol, v) in self.consts:
             if name.startswith("_"):  # 物理常量
-                exper = replace_if_surrounded_by_math(exper, "_" + symbol, name)
+                exper = self._replace_if_surrounded_by_math(exper, "_" + symbol, name)
             else:  # 数学常量
-                exper = replace_if_surrounded_by_math(exper, symbol, name)
+                exper = self._replace_if_surrounded_by_math(exper, symbol, name)
         loger.debug("replaced: " + exper)
 
-        def atomize_units(exp) -> str:
-            """把单位原子化，如 5V/3A -> (5V)/(3A)，防止计算优先级错误"""
-            # 原子化：数字 + 字母（可能带数字后缀，如 m2, m3）
-            is_digit_or_dot = lambda x: x.isdigit() or x == '.'
-            new = []
-            i = 0
-            n = len(exp)
-            while i < n:
-                ch = exp[i]
-                if is_digit_or_dot(ch):
-                    start = i
-                    # 收集数字
-                    while i < n and is_digit_or_dot(exp[i]):
-                        i += 1
-                    # if i < n and exp[i] in 'eE':
-                    #     i += 1
-                    #     if i < n and exp[i] in '+-':
-                    #         i += 1
-                    #     while i < n and exp[i].isdigit():
-                    #         i += 1
-                    # 处理 ^ 指数（如 10^-34）
-                    if i < n and exp[i] == '^':
-                        i += 1
-                        if i < n and exp[i] in '+-':
-                            i += 1
-                        while i < n and exp[i].isdigit():
-                            i += 1
-                    num_part = exp[start:i]
-
-                    # 检查后面是否跟单位
-                    if i < n and (exp[i].isalpha() or exp[i] in "_"):
-                        ident_start = i
-                        # 检查函数调用
-                        while i < n and (exp[i].isalpha() or exp[i] in '_/·'):
-                            if exp[i] in '/·':
-                                # 检查 / 后面是不是函数调用
-                                j = i + 1
-                                while j < n and exp[j].isalpha():
-                                    j += 1
-                                if j < n and exp[j] == '(':
-                                    break  # /sin( 这种情况，停止收集
-                                if i < n - 1 and exp[i + 1].isdigit():
-                                    break  # /3A 这种情况，停止收集
-                            # 前瞻：字母后面直接跟 (，也是函数调用
-                            if i == ident_start:
-                                j = i
-                                while j < n and exp[j].isalpha():
-                                    j += 1
-                                if j < n and exp[j] == '(':
-                                    break
-                            i += 1
-                        else:
-                            # 没有函数调用
-                            while i < n and (exp[i].isalpha() or exp[i] in "_/·^"):
-                                if exp[i] in "/·" and i < n-1 and exp[i+1].isdigit():
-                                    break
-                                i += 1
-                                if exp[i-1] == '^':
-                                    if i < n and exp[i] in '+-':
-                                        i += 1
-                                    while i < n and is_digit_or_dot(exp[i]):
-                                        i += 1
-                            # 允许字母后面跟数字（如 m2, m3）
-                            while i < n and exp[i].isdigit():
-                                i += 1
-                        ident = exp[ident_start:i]
-
-                        # 原子化
-                        new.append('(' + num_part + ident + ')')
-                    else:
-                        new.append(num_part)
-                else:
-                    new.append(ch)
-                    i += 1
-            exp = ''.join(new)
-            return exp
-
-        exper = atomize_units(exper)
+        exper = self._atomize_units(exper)
         loger.debug("atomized: " + exper)
         exper = (exper.replace("÷", "/").replace(":", "/")
                  .replace("^", "**").replace("·", "*"))  # 与复合单位中/和*区分
 
-        def insert_mul(exp):
-            """补全省略的乘号"""
-            result = []
-            i = 0
-            n = len(exp)
-            while i < n:
-                if exp[i].isdigit() or exp[i] == '.':
-                    # 收集数字部分
-                    start = i
-                    while i < n and (exp[i].isdigit() or exp[i] == '.'):
-                        i += 1
-                    num_part = exp[start:i]
-                    if i < n and (exp[i].isalpha() or exp[i] == "_"):
-                        if i < n - 1 and exp[i] in "eE" and (exp[i + 1].isdigit() or exp[i + 1] in "+-"):  # 检查科学计数法
-                            result.append(num_part)
-                        else:
-                            result.append(num_part + '*')
-                            # print(exper[i])
-                    else:
-                        result.append(num_part)
-                elif exp[i] == ')':
-                    # 右括号后紧跟左括号，插入乘号
-                    result.append(exp[i])
-                    i += 1
-                    if i < n and (exp[i] == '(' or exp[i].isalpha() or exp[i].isdigit()):
-                        result.append('*')
-                else:
-                    result.append(exp[i])
-                    i += 1
-            exp = "".join(result)
-            loger.debug("insert *: " + exp)
-            return exp
-        exper = insert_mul(exper)
+        exper = self._insert_mul(exper)
 
         # 补全右括号
         s9s0 = exper.count("(") - exper.count(")")
         if s9s0 > 0:
             exper += ")" * s9s0
         return exper
+
+    @staticmethod
+    def _replace_if_surrounded_by_math(exp, sym: str, name: str):
+        """在exp中sym两边都是数字或数学符号时，把exp中的sym替换成name"""
+        allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")
+        result = []
+        i = 0
+        n = len(exp)
+        sym_len = len(sym)
+        while i < n:
+            pos = exp.find(sym, i)
+            if pos == -1:
+                result.append(exp[i:])
+                break
+            before_char = exp[pos - 1] if pos > 0 else '^'
+            after_char = exp[pos + sym_len] if pos + sym_len < n else '$'
+            before_ok = (pos == 0) or (before_char in allowed)
+            after_ok = (pos + sym_len == n) or (after_char in allowed)
+            if before_ok and after_ok:
+                result.append(exp[i:pos])
+                result.append(name)
+            else:
+                result.append(exp[i:pos + sym_len])
+            i = pos + sym_len
+        return ''.join(result)
+
+    @staticmethod
+    def _atomize_units(exp) -> str:
+        """把单位原子化，如 5V/3A -> (5V)/(3A)，防止计算优先级错误"""
+        # 原子化：数字 + 字母（可能带数字后缀，如 m2, m3）
+        is_digit_or_dot = lambda x: x.isdigit() or x == '.'
+        new = []
+        i = 0
+        n = len(exp)
+        while i < n:
+            ch = exp[i]
+            if is_digit_or_dot(ch):
+                start = i
+                # 收集数字
+                while i < n and is_digit_or_dot(exp[i]):
+                    i += 1
+                # if i < n and exp[i] in 'eE':
+                #     i += 1
+                #     if i < n and exp[i] in '+-':
+                #         i += 1
+                #     while i < n and exp[i].isdigit():
+                #         i += 1
+                # 处理 ^ 指数（如 10^-34）
+                if i < n and exp[i] == '^':
+                    i += 1
+                    if i < n and exp[i] in '+-':
+                        i += 1
+                    while i < n and exp[i].isdigit():
+                        i += 1
+                num_part = exp[start:i]
+
+                # 检查后面是否跟单位
+                if i < n and (exp[i].isalpha() or exp[i] in "_"):
+                    ident_start = i
+                    # 检查函数调用
+                    while i < n and (exp[i].isalpha() or exp[i] in '_/·'):
+                        if exp[i] in '/·':
+                            # 检查 / 后面是不是函数调用
+                            j = i + 1
+                            while j < n and exp[j].isalpha():
+                                j += 1
+                            if j < n and exp[j] == '(':
+                                break  # /sin( 这种情况，停止收集
+                            if i < n - 1 and exp[i + 1].isdigit():
+                                break  # /3A 这种情况，停止收集
+                        # 前瞻：字母后面直接跟 (，也是函数调用
+                        if i == ident_start:
+                            j = i
+                            while j < n and exp[j].isalpha():
+                                j += 1
+                            if j < n and exp[j] == '(':
+                                break
+                        i += 1
+                    else:
+                        # 没有函数调用
+                        while i < n and (exp[i].isalpha() or exp[i] in "_/·^"):
+                            if exp[i] in "/·" and i < n - 1 and exp[i + 1].isdigit():
+                                break
+                            i += 1
+                            if exp[i - 1] == '^':
+                                if i < n and exp[i] in '+-':
+                                    i += 1
+                                while i < n and is_digit_or_dot(exp[i]):
+                                    i += 1
+                        # 允许字母后面跟数字（如 m2, m3）
+                        while i < n and exp[i].isdigit():
+                            i += 1
+                    ident = exp[ident_start:i]
+
+                    # 原子化
+                    new.append('(' + num_part + ident + ')')
+                else:
+                    new.append(num_part)
+            else:
+                new.append(ch)
+                i += 1
+        exp = ''.join(new)
+        return exp
+
+    @staticmethod
+    def _insert_mul(exp):
+        """补全省略的乘号"""
+        result = []
+        i = 0
+        n = len(exp)
+        while i < n:
+            if exp[i].isdigit() or exp[i] == '.':
+                # 收集数字部分
+                start = i
+                while i < n and (exp[i].isdigit() or exp[i] == '.'):
+                    i += 1
+                num_part = exp[start:i]
+                if i < n and (exp[i].isalpha() or exp[i] == "_"):
+                    if i < n - 1 and exp[i] in "eE" and (exp[i + 1].isdigit() or exp[i + 1] in "+-"):  # 检查科学计数法
+                        result.append(num_part)
+                    else:
+                        result.append(num_part + '*')
+                        # print(exper[i])
+                else:
+                    result.append(num_part)
+            elif exp[i] == ')':
+                # 右括号后紧跟左括号，插入乘号
+                result.append(exp[i])
+                i += 1
+                if i < n and (exp[i] == '(' or exp[i].isalpha() or exp[i].isdigit()):
+                    result.append('*')
+            else:
+                result.append(exp[i])
+                i += 1
+        exp = "".join(result)
+        loger.debug("insert *: " + exp)
+        return exp
 
     @lru_cache(maxsize=128)  # 缓存计算结果
     def _safe_eval(self, exper: str) -> "pint.Quantity | int | float":
@@ -266,6 +271,7 @@ class DimCalculatorCore:
             loger.error(type(e).__name__ + ": " + str(e))
             return []
 
+    # noinspection PyMethodMayBeStatic
     def _load_consts(self, filename) -> list:
         """导入常量，返回常量字典"""
         try:
@@ -349,7 +355,8 @@ class DimCalculatorCore:
         namespace['ln'] = lambda x: math.log(x, math.e)
         return namespace
 
-    def diagnose_error(self, error: Exception) -> str:  # todo: 角度弧度
+    @staticmethod
+    def diagnose_error(error: Exception) -> str:  # todo: 角度弧度
         """根据错误类型生成教学提示，支持量纲分析、未定义名称、语法错误等"""
         err_type = type(error).__name__
         err_msg = str(error)
