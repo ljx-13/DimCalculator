@@ -70,6 +70,7 @@ def run_all_tests():
     test("5sin(60°)", "4.33012701892")
     test("5m÷5mm/min", "60000s")
     test("5V/2A", "2.5Ω")
+    test("(123m+45cm)kg", "123.45kg⋅m")
 
     # ========== 6. 导出单位 ==========
     print("\n导出单位 (N, J, W, Pa, V, Ω):")

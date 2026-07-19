@@ -105,9 +105,23 @@ class DimCalculatorCore:
 
     @staticmethod
     def _atomize_units(exp) -> str:
-        """把单位原子化，如 5V/3A -> (5V)/(3A)，防止计算优先级错误"""
-        # 原子化：数字 + 字母（可能带数字后缀，如 m2, m3）
-        is_digit_or_dot = lambda x: x.isdigit() or x == '.'
+        """
+        把单位原子化，防止计算优先级错误。
+        将数字与其紧邻的单位用括号包裹，确保单位不被错误解析为变量或运算符。如:
+
+        - 5V/3A -> (5V)/(3A)
+        - 5kg/mol -> (5kg/mol)
+        - 5m/sin(60°) -> (5m)/sin(60°)
+        - 5mol^-1 -> (5mol^-1)
+        - 6.62607015e^-34J·s -> (6.62607015e^-34J·s)
+        支持的单位写法:
+
+        - 基本单位: m, kg, mol, J, V, A 等
+        - 复合单位: kg/mol, J/(kg·K)
+        - 指数: m^2, m², mol^-1, mol^0.5
+        - 中间点: J·s, N⋅m
+        """
+        is_digit_or_dot = lambda x: x.isdigit() or x == '.'  # 检测是否为函数或小数点
         new = []
         i = 0
         n = len(exp)
@@ -115,71 +129,65 @@ class DimCalculatorCore:
             ch = exp[i]
             if is_digit_or_dot(ch):
                 start = i
-                # 收集数字
+                # 收集数字部分（整数或小数）
                 while i < n and is_digit_or_dot(exp[i]):
                     i += 1
-                # if i < n and exp[i] in 'eE':
-                #     i += 1
-                #     if i < n and exp[i] in '+-':
-                #         i += 1
-                #     while i < n and exp[i].isdigit():
-                #         i += 1
-                # 处理 ^ 指数（如 10^-34）
+                # 注：不再支持 e/E 科学计数法（如 3e+2），因为在该应用场景中 e 代表自然常数或元电荷
+                # 处理 ^ 指数（如 10^-34，）
                 if i < n and exp[i] == '^':
                     i += 1
                     if i < n and exp[i] in '+-':
                         i += 1
-                    while i < n and exp[i].isdigit():
+                    while i < n and exp[i].isdigit():  # todo: 循环指数
                         i += 1
                 num_part = exp[start:i]
-
-                # 检查后面是否跟单位
+                # 检查数字后面是否紧跟单位/常数（字母或下划线开头）
                 if i < n and (exp[i].isalpha() or exp[i] in "_"):
                     ident_start = i
-                    # 检查函数调用
-                    while i < n and (exp[i].isalpha() or exp[i] in '_/·'):
-                        if exp[i] in '/·':
-                            # 检查 / 后面是不是函数调用
-                            j = i + 1
-                            while j < n and exp[j].isalpha():
-                                j += 1
-                            if j < n and exp[j] == '(':
-                                break  # /sin( 这种情况，停止收集
-                            if i < n - 1 and exp[i + 1].isdigit():
-                                break  # /3A 这种情况，停止收集
-                        # 前瞻：字母后面直接跟 (，也是函数调用
-                        if i == ident_start:
-                            j = i
-                            while j < n and exp[j].isalpha():
-                                j += 1
-                            if j < n and exp[j] == '(':
-                                break
-                        i += 1
-                    else:
-                        # 没有函数调用
-                        while i < n and (exp[i].isalpha() or exp[i] in "_/·^"):
-                            if exp[i] in "/·" and i < n - 1 and exp[i + 1].isdigit():
+                    # 收集单位部分，支持括号嵌套（如 J/(kg·K)）
+                    paren_depth = 0
+                    while i < n:
+                        c = exp[i]
+                        if c == '(':
+                            paren_depth += 1
+                            i += 1
+                        elif c == ')':
+                            paren_depth -= 1
+                            if paren_depth < 0:
+                                break  # 多余的右括号（不属于当前单位），停止
+                            i += 1
+                            if paren_depth == 0:
+                                break  # 配对的右括号，括号内容收集完毕
+                        elif c.isalpha() or c == '_' or c.isdigit():
+                            i += 1
+                        elif c in '/·':
+                            # 遇到 / 或 · 且后面是数字时停止（如 /3A 中的 /3）。此时当前单位结束，后面的数字+单位由下一轮处理
+                            if i + 1 < n and exp[i + 1].isdigit():
                                 break
                             i += 1
-                            if exp[i - 1] == '^':
-                                if i < n and exp[i] in '+-':
-                                    i += 1
-                                while i < n and is_digit_or_dot(exp[i]):
-                                    i += 1
-                        # 允许字母后面跟数字（如 m2, m3）
-                        while i < n and exp[i].isdigit():
+                        elif c == '^':
+                            # 收集指数部分（如 ^-1, ^2）
                             i += 1
+                            if i < n and exp[i] in '+-':
+                                i += 1
+                            while i < n and is_digit_or_dot(exp[i]):
+                                i += 1
+                        else:
+                            # 遇到其他字符（运算符、函数括号等），单位结束
+                            break
                     ident = exp[ident_start:i]
-
-                    # 原子化
-                    new.append('(' + num_part + ident + ')')
+                    if ident:
+                        # 将数字+单位整体用括号包裹
+                        new.append('(' + num_part + ident + ')')
+                    else:
+                        new.append(num_part)
                 else:
                     new.append(num_part)
             else:
+                # 非数字字符直接保留
                 new.append(ch)
                 i += 1
-        exp = ''.join(new)
-        return exp
+        return ''.join(new)
 
     @staticmethod
     def _insert_mul(exp):
