@@ -640,7 +640,8 @@ class DimCalculatorCore:
             converted = q.to(target_unit)
             # 格式化输出
             result_str = f"{self._round_magnitude(converted.magnitude)}{converted.units:~}".replace(" ", "")
-            return self._format_scientific(result_str), None
+            result_str = self._format_scientific(result_str).replace("deg", "°").replace("°C", "℃").replace("°F", "℉")
+            return result_str, None
         except pint.DimensionalityError:
             return None, f"❌ 单位不匹配：无法将 {self.last_ans} 转换为 {target_unit}"
         except pint.UndefinedUnitError:
