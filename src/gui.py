@@ -33,15 +33,15 @@ class DimCalculatorGUI(QMainWindow):
         self.core = DimCalculatorCore()
         self.is_convert_mode = False  # 标记是否处于单位转换模式]
         self.is_convert_mode = False
-        self.unit_buttons = []  # 新增：存储单位按钮
-        self.const_buttons = []  # 新增：存储常数按钮
-        self.unit_cols = 3  # 新增：当前列数
-        self.const_cols = 3  # 新增：当前列数
+        self.unit_buttons = []
+        self.const_buttons = []
+        self.func_buttons = []
+        self.panel_cols = 3  # 右侧面板共用列数
         self.initUI()
         QTimer.singleShot(100, self.update_button_layout)
 
     @catch_exceptions("初始化窗口时崩溃")
-    def initUI(self):
+    def initUI(self):  # todo: init外定义
         self.setWindowTitle("DimCalculator - 智能量纲计算器")
         self.setMinimumSize(800, 750)
         # self.setMaximumWidth(1250)
@@ -83,7 +83,7 @@ class DimCalculatorGUI(QMainWindow):
             QPushButton:pressed { background-color: #cccccc; }
             QPushButton#opBtn:checked {background-color: #cccccc;  /* 和数字按钮按下的灰色完全一致 */}
             QPushButton#opBtn { background-color: #f0f0f0; font-weight: bold; color: #0078d7; }
-            QPushButton#funcBtn, QPushButton#unitBtn { background-color: #f9f9f9; font-size: 20px; }
+            QPushButton#unitBtn { background-color: #f9f9f9; font-size: 20px; }
             QGroupBox {
                 font-weight: bold;
                 margin-top: 10px;
@@ -149,32 +149,77 @@ class DimCalculatorGUI(QMainWindow):
         right_tabs = QTabWidget()
         right_tabs.setTabPosition(QTabWidget.North)
 
+        @catch_exceptions("处理单位输入时崩溃")
+        def handle_unit_click(symbol, name=None):
+            if self.is_convert_mode:
+                # 处于转换模式：执行单位转换
+                if self.is_convert_mode:
+                    converted_result, error = self.core.convert_unit(symbol)
+                    if error:
+                        self.result_label.setText("转换错误")
+                        self.info_text.setText(error)
+                    else:
+                        self.result_label.setText(converted_result)
+                        # 退出转换模式，恢复按钮状态
+                        self.is_convert_mode = False
+                        # 找到“单位转换”按钮并弹起
+                        for btn in self.findChildren(QPushButton):
+                            if btn.text() == "单位转换":
+                                btn.setChecked(False)
+                                break
+            else:
+                # 非转换模式：正常插入单位符号
+                self.expr_edit.insert(symbol)
+
+        @catch_exceptions("处理常数输入时崩溃")
+        def handle_const_click(symbol, name):
+            if name.startswith("_"):
+                self.expr_edit.insert("_" + symbol)
+            else:
+                self.expr_edit.insert(symbol)
+
+        @catch_exceptions("处理函数输入时崩溃")
+        def handle_func_click(symbol, name=None):
+            self.expr_edit.insert(symbol + "(")
+
         # 单位面板
-        self.unit_widget, self.unit_layout, self.unit_buttons = (
-            self._create_right_panel(self.core.units, lambda item: item[3], self._handle_unit_click, right_tabs, "单位"))
+        unit_widget, self.unit_layout, self.unit_buttons = self._create_buttons_from_items(
+            self.core.units, lambda item: item[3], handle_unit_click
+        )
+        scroll = QScrollArea()
+        scroll.setWidget(unit_widget)
+        scroll.setWidgetResizable(True)
+        scroll.setMinimumWidth(250)
+        right_tabs.addTab(scroll, "单位")
 
         # 常数面板
-        self.const_widget, self.const_layout, self.const_buttons = (
-            self._create_right_panel(self.core.consts, lambda item: True, self._handle_const_click, right_tabs, "常数"))
+        const_widget, self.const_layout, self.const_buttons = self._create_buttons_from_items(
+            self.core.consts, lambda item: True, handle_const_click
+        )
+        scroll = QScrollArea()
+        scroll.setWidget(const_widget)
+        scroll.setWidgetResizable(True)
+        scroll.setMinimumWidth(250)
+        right_tabs.addTab(scroll, "常数")
 
-        # 函数面板  todo: 拉伸统一
-        func_widget = QWidget()
-        func_layout = QGridLayout(func_widget)
-        functions = {"sin": "正弦函数", "cos": "余弦函数", "tan": "正切函数",
-                     "log": "log(真数, 底数)", "lg": "常用对数", "ln": "自然对数",
-                     "abs": "绝对值"}
-        row, col = 0, 0
-        for func, tip in functions.items():
-            btn = QPushButton(func)
-            btn.setObjectName("funcBtn")
-            btn.setToolTip(tip)
-            btn.clicked.connect(lambda checked, f=func: self.expr_edit.insert(f + "("))
-            func_layout.addWidget(btn, row, col)
-            col += 1
-            if col > 2:
-                col = 0
-                row += 1
-        right_tabs.addTab(func_widget, "函数")
+        # 函数面板
+        func_data = [
+            ("sin", "正弦函数", "sin"),
+            ("cos", "余弦函数", "cos"),
+            ("tan", "正切函数", "tan"),
+            ("log", "log(真数, 底数)", "log"),
+            ("lg", "常用对数", "lg"),
+            ("ln", "自然对数", "ln"),
+            ("abs", "绝对值", "abs"),
+        ]
+        func_widget, self.func_layout, self.func_buttons = self._create_buttons_from_items(
+            func_data, lambda item: True, handle_func_click
+        )
+        scroll = QScrollArea()
+        scroll.setWidget(func_widget)
+        scroll.setWidgetResizable(True)
+        scroll.setMinimumWidth(250)
+        right_tabs.addTab(scroll, "函数")
 
         content_layout.addWidget(left_widget, 3)
         content_layout.addWidget(right_tabs, 2)
@@ -196,29 +241,15 @@ class DimCalculatorGUI(QMainWindow):
 
         self.resize(800, 750)
 
-    @catch_exceptions("创建菜单栏时崩溃")
-    def _create_menubar(self):
-        """创建菜单栏"""
-        menubar = self.menuBar()
-
-        help_menu = menubar.addMenu("帮助")
-        welcome_action = QAction("欢迎", self)
-        welcome_action.triggered.connect(self.show_welcome)
-        help_menu.addAction(welcome_action)
-        help_action = QAction("用户手册", self)
-        help_action.triggered.connect(self.open_help)
-        help_menu.addAction(help_action)
-
-    @catch_exceptions("创建右侧单位/常数面板时崩溃")
-    def _create_right_panel(self, items, filter_func, click_handler, tab_widget, tab_name, cols=3):
+    @catch_exceptions("创建按钮面板时崩溃")
+    def _create_buttons_from_items(self, items, filter_func, click_handler, cols=3):
         """
-        创建右侧单位/常数面板，自动添加滚动区域和标签页
-        :param items: 数据列表 (units 或 consts)
+        从数据列表生成按钮面板
+        :param items: 数据列表
         :param filter_func: 过滤函数，返回 True 表示显示
-        :param click_handler: 点击处理函数
-        :param tab_widget: QTabWidget 实例
-        :param tab_name: 标签页名称 ("单位" 或 "常数")
+        :param click_handler: 点击处理函数，接收 (symbol, name)
         :param cols: 列数
+        :return: (widget, layout, buttons)
         """
         widget = QWidget()
         layout = QGridLayout(widget)
@@ -241,14 +272,20 @@ class DimCalculatorGUI(QMainWindow):
             if col >= cols:
                 col = 0
                 row += 1
-
-        scroll = QScrollArea()
-        scroll.setWidget(widget)
-        scroll.setWidgetResizable(True)
-        scroll.setMinimumWidth(250)
-        tab_widget.addTab(scroll, tab_name)
-
         return widget, layout, buttons
+
+    @catch_exceptions("创建菜单栏时崩溃")
+    def _create_menubar(self):
+        """创建菜单栏"""
+        menubar = self.menuBar()
+
+        help_menu = menubar.addMenu("帮助")
+        welcome_action = QAction("欢迎", self)
+        welcome_action.triggered.connect(self.show_welcome)
+        help_menu.addAction(welcome_action)
+        help_action = QAction("用户手册", self)
+        help_action.triggered.connect(self.open_help)
+        help_menu.addAction(help_action)
 
     @catch_exceptions("更新右侧面板按钮列数时崩溃")
     def update_button_layout(self):
@@ -265,21 +302,14 @@ class DimCalculatorGUI(QMainWindow):
                 break
         else:
             new_cols = 10
-        # 更新单位面板
+        # 更新所有面板
         if hasattr(self, 'unit_buttons') and self.unit_buttons:
-            if new_cols != self.unit_cols:
-                self.unit_cols = new_cols
-                self._reflow_buttons(self.unit_layout, self.unit_buttons, new_cols)
-            else:
-                # 列数不变，但窗口大小变了，仍需调整按钮大小
-                self._reflow_buttons(self.unit_layout, self.unit_buttons, new_cols)
-        # 更新常数面板
+            self._reflow_buttons(self.unit_layout, self.unit_buttons, new_cols)
         if hasattr(self, 'const_buttons') and self.const_buttons:
-            if new_cols != self.const_cols:
-                self.const_cols = new_cols
-                self._reflow_buttons(self.const_layout, self.const_buttons, new_cols)
-            else:
-                self._reflow_buttons(self.const_layout, self.const_buttons, new_cols)
+            self._reflow_buttons(self.const_layout, self.const_buttons, new_cols)
+        if hasattr(self, 'func_buttons') and self.func_buttons:
+            self._reflow_buttons(self.func_layout, self.func_buttons, new_cols)
+        self.panel_cols = new_cols
 
     @catch_exceptions("重新排列右侧面板按钮时崩溃")
     def _reflow_buttons(self, layout, buttons, cols):
@@ -331,36 +361,6 @@ class DimCalculatorGUI(QMainWindow):
             if col >= cols:
                 col = 0
                 row += 1
-
-    @catch_exceptions("处理单位输入时崩溃")
-    def _handle_unit_click(self, symbol, name=None):
-        if self.is_convert_mode:
-            # 处于转换模式：执行单位转换
-            if self.is_convert_mode:
-                converted_result, error = self.core.convert_unit(symbol)
-                if error:
-                    self.result_label.setText("转换错误")
-                    self.info_text.setText(error)
-                else:
-                    self.result_label.setText(converted_result)
-                    # 退出转换模式，恢复按钮状态
-                    self.is_convert_mode = False
-                    # 找到“单位转换”按钮并弹起
-                    for btn in self.findChildren(QPushButton):
-                        if btn.text() == "单位转换":
-                            btn.setChecked(False)
-                            break
-        else:
-            # 非转换模式：正常插入单位符号
-            self.expr_edit.insert(symbol)
-
-    @catch_exceptions("处理常数输入时崩溃")
-    def _handle_const_click(self, symbol, name):
-        # 物理常数以 _ 开头，加下划线；数学常数直接插入
-        if name.startswith("_"):
-            self.expr_edit.insert("_" + symbol)
-        else:
-            self.expr_edit.insert(symbol)
 
     @catch_exceptions("处理按钮事件时崩溃")
     def on_button_clicked(self, checked=False):
