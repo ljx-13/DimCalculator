@@ -301,6 +301,7 @@ class DimCalculatorCore:
             return []
 
     def _build_namespace(self):
+        """为运算创建命名空间"""
         namespace = {}
         # 所有注册的单位
         for name, dn, s, c in self.units:
@@ -608,7 +609,7 @@ class DimCalculatorCore:
                 result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
             else:
                 result_str = str(self._round_magnitude(result))
-            result_str = result_str.replace("deg", "°")
+            result_str = result_str.replace("deg", "°").replace("°C", "℃").replace("°F", "℉")
             loger.debug("final result: " + result_str)
         except Exception as e:
             # 诊断错误
