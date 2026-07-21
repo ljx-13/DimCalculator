@@ -514,6 +514,8 @@ class DimCalculatorCore:
     @staticmethod
     def _round_magnitude(value: float):
         """四舍五入，同时避免丢失极大极小值"""
+        if isinstance(value, pint.Quantity):
+            value = value.magnitude
         if isinstance(value, float):
             if 0 < abs(value) < 1e-10 or abs(value) > 1e10:
                 return f"{value:.12g}".rstrip('0').rstrip('.')
@@ -540,7 +542,6 @@ class DimCalculatorCore:
         if isinstance(result, pint.Quantity):
             # 如果是无量纲，直接返回数值
             loger.debug(f"original dimensionality: {result.dimensionality}")
-            print(result.units)
             if result.dimensionless:
                 if not result.units in ("rad", "r", "deg", "degree"):
                     return result.to_base_units().magnitude
@@ -599,7 +600,7 @@ class DimCalculatorCore:
             result = self._safe_eval(exper)
             loger.debug(f"original result: {result}")
             # 格式化输出
-            if isinstance(result, pint.Quantity):
+            if isinstance(result, pint.Quantity) and not result.dimensionless:
                 # 紧凑格式：5m 而不是 5 meter
                 try:
                     # 智能格式化数值
