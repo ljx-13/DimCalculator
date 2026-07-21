@@ -344,6 +344,12 @@ class DimCalculatorCore:
             return abs(x)
         def log(x, base):
             """默认的log以e为底，为避免歧义去除该默认值"""
+            # 如果带单位，检查是否无量纲
+            if isinstance(x, pint.Quantity):
+                if not x.dimensionless:
+                    raise ValueError(f"对数log()的参数必须无量纲，但输入了 {x.units}")
+                x = x.magnitude
+            # 现在 x 是纯数字
             return math.log(x, base)
         def sqrt(x):
             if isinstance(x, pint.Quantity):
@@ -360,8 +366,8 @@ class DimCalculatorCore:
         namespace['sqrt'] = sqrt
         namespace['abs'] = _abs
         namespace['log'] = log
-        namespace['lg'] = math.log10
-        namespace['ln'] = lambda x: math.log(x, math.e)
+        namespace['lg'] = lambda x: log(x, 10)
+        namespace['ln'] = lambda x: log(x, math.e)
         return namespace
 
     @staticmethod
