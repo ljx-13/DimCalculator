@@ -540,8 +540,9 @@ class DimCalculatorCore:
         if isinstance(result, pint.Quantity):
             # 如果是无量纲，直接返回数值
             loger.debug(f"original dimensionality: {result.dimensionality}")
+            print(result.units)
             if result.dimensionless:
-                if not result.units in ("rad", "r"):
+                if not result.units in ("rad", "r", "deg", "degree"):
                     return result.to_base_units().magnitude
             unit = str(result.units)
             if "liter" in unit:
