@@ -530,9 +530,8 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("打开用户手册时崩溃")
     def show_help(self, checked=False):
         """打开用户手册"""
-        help_path = os.path.join(os.path.dirname(__file__), "..", "docs", "help.md")
         try:
-            with open(help_path, "r", encoding="utf-8") as f:
+            with open("docs/help.md", "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             QMessageBox.warning(self, "提示", f"用户手册加载失败: {e}")
@@ -650,9 +649,8 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("检查首次启动时崩溃")
     def check_first_run(self):
         """第一次运行时弹出欢迎窗口"""
-        config_path = os.path.join(os.path.dirname(__file__), "..", "datas", "config.json")
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open("datas/config.json", "r", encoding="utf-8") as f:
                 config = json.load(f)
         except Exception as e:
             logging.warning(f"首次启动检查失败: {e}")
@@ -660,7 +658,7 @@ class DimCalculatorGUI(QMainWindow):
             if config.get("first_run", True):
                 self.show_welcome()
                 config["first_run"] = False
-                with open(config_path, "w", encoding="utf-8") as f:
+                with open("datas/config.json", "w", encoding="utf-8") as f:
                     json.dump(config, f, ensure_ascii=False, indent=4)
 
     @catch_exceptions("重新计算窗口大小时崩溃")
