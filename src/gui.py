@@ -179,8 +179,8 @@ class DimCalculatorGUI(QMainWindow):
                 self.expr_edit.insert(symbol)
 
         @catch_exceptions("处理函数输入时崩溃")
-        def handle_func_click(symbol, name=None):
-            self.expr_edit.insert(symbol + "(")
+        def handle_func_click(symbol, name):
+            self.expr_edit.insert(name + "(")
 
         # 单位面板
         unit_widget, self.unit_layout, self.unit_buttons = self._create_buttons_from_items(
@@ -203,12 +203,12 @@ class DimCalculatorGUI(QMainWindow):
         right_tabs.addTab(scroll, "常数")
 
         # 函数面板
-        func_data = [
+        func_data = [  # （名字，描述，符号）
             ("sin", "正弦函数", "sin"), ("cos", "余弦函数", "cos"), ("tan", "正切函数", "tan"),
             # ("csc", "余割函数(1/sin)", "csc"), ("sec", "正割函数(1/cos)", "sec"), ("cot", "余切函数(1/tan)", "cot"),
             ("asin", "反正弦", "asin"), ("acos", "反余弦", "acos"), ("atan", "反正切", "atan"),
             ("log", "log(真数, 底数)", "log"), ("lg", "常用对数", "lg"), ("ln", "自然对数", "ln"),
-            ("abs", "绝对值", "abs"),
+            ("abs", "绝对值", "|x|"),
         ]
         func_widget, self.func_layout, self.func_buttons = self._create_buttons_from_items(
             func_data, lambda item: True, handle_func_click
