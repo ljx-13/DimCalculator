@@ -339,11 +339,12 @@ class DimCalculatorCore:
                 raise ValueError(f"tan({input_x}) 无定义：正切函数在 π/2 + kπ 处趋于无穷")
             return round(result, 12)
         def _abs(x):
+            """绝对值"""
             if isinstance(x, pint.Quantity):
                 return abs(x.magnitude)
             return abs(x)
         def log(x, base):
-            """默认的log以e为底，为避免歧义去除该默认值"""
+            """取对数"""
             # 如果带单位，检查是否无量纲
             if isinstance(x, pint.Quantity):
                 if not x.dimensionless:
@@ -351,7 +352,8 @@ class DimCalculatorCore:
                 x = x.magnitude
             # 现在 x 是纯数字
             return math.log(x, base)
-        def sqrt(x):
+        def sqrt(x):  # todo: free sqrt
+            """开方"""
             if isinstance(x, pint.Quantity):
                 return math.sqrt(x.magnitude) * x.units ** 0.5
             elif isinstance(x, pint.Unit):
@@ -363,6 +365,12 @@ class DimCalculatorCore:
         namespace['sin'] = lambda x: trigonometric(math.sin, x)
         namespace['cos'] = lambda x: trigonometric(math.cos, x)
         namespace['tan'] = lambda x: trigonometric(math.tan, x)
+        # namespace['cot'] = lambda x: trigonometric(lambda v: 1 / math.tan(v), x)
+        # namespace['sec'] = lambda x: trigonometric(lambda v: 1 / math.cos(v), x)
+        # namespace['csc'] = lambda x: trigonometric(lambda v: 1 / math.sin(v), x)
+        namespace['asin'] = lambda x: trigonometric(math.asin, x)
+        namespace['acos'] = lambda x: trigonometric(math.acos, x)
+        namespace['atan'] = lambda x: trigonometric(math.atan, x)
         namespace['sqrt'] = sqrt
         namespace['abs'] = _abs
         namespace['log'] = log

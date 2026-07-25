@@ -204,12 +204,10 @@ class DimCalculatorGUI(QMainWindow):
 
         # 函数面板
         func_data = [
-            ("sin", "正弦函数", "sin"),
-            ("cos", "余弦函数", "cos"),
-            ("tan", "正切函数", "tan"),
-            ("log", "log(真数, 底数)", "log"),
-            ("lg", "常用对数", "lg"),
-            ("ln", "自然对数", "ln"),
+            ("sin", "正弦函数", "sin"), ("cos", "余弦函数", "cos"), ("tan", "正切函数", "tan"),
+            # ("csc", "余割函数(1/sin)", "csc"), ("sec", "正割函数(1/cos)", "sec"), ("cot", "余切函数(1/tan)", "cot"),
+            ("asin", "反正弦", "asin"), ("acos", "反余弦", "acos"), ("atan", "反正切", "atan"),
+            ("log", "log(真数, 底数)", "log"), ("lg", "常用对数", "lg"), ("ln", "自然对数", "ln"),
             ("abs", "绝对值", "abs"),
         ]
         func_widget, self.func_layout, self.func_buttons = self._create_buttons_from_items(
@@ -245,7 +243,7 @@ class DimCalculatorGUI(QMainWindow):
     def _create_buttons_from_items(self, items, filter_func, click_handler, cols=3):
         """
         从数据列表生成按钮面板
-        :param items: 数据列表
+        :param items: 数据列表（名字，描述，符号）
         :param filter_func: 过滤函数，返回 True 表示显示
         :param click_handler: 点击处理函数，接收 (symbol, name)
         :param cols: 列数
@@ -260,11 +258,11 @@ class DimCalculatorGUI(QMainWindow):
             if not filter_func(item):
                 continue
             symbol = item[2]
-            display_name = item[1]
+            description = item[1]
             name = item[0]
             btn = QPushButton(symbol)
             btn.setObjectName("unitBtn")
-            btn.setToolTip(display_name)
+            btn.setToolTip(description)
             btn.clicked.connect(lambda checked, s=symbol, n=name: click_handler(s, n))
             buttons.append(btn)
             layout.addWidget(btn, row, col)
