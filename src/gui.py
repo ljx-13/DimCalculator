@@ -282,8 +282,11 @@ class DimCalculatorGUI(QMainWindow):
         welcome_action.triggered.connect(self.show_welcome)
         help_menu.addAction(welcome_action)
         help_action = QAction("用户手册", self)
-        help_action.triggered.connect(self.open_help)
+        help_action.triggered.connect(self.show_help)
         help_menu.addAction(help_action)
+        about_action = QAction("关于", self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
 
     @catch_exceptions("更新右侧面板按钮列数时崩溃")
     def update_button_layout(self):
@@ -442,8 +445,90 @@ class DimCalculatorGUI(QMainWindow):
         clear_btn.clicked.connect(clear_history)
         dialog.exec_()
 
+    @catch_exceptions("打开关于窗口时崩溃")
+    def show_about(self, checked=False):
+        """显示关于对话框"""
+        dialog = QDialog(self)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setWindowTitle("关于 DimCalculator")
+        dialog.setFixedSize(420, 420)
+        dialog.setStyleSheet("""
+            QDialog { background-color: white; }
+            QLabel { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+            QLabel#link { color: #0078d7; }
+            QLabel#link:hover { text-decoration: underline; }
+        """)
+
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(12)
+        layout.setContentsMargins(40, 30, 40, 30)
+
+        # 图标
+        icon_label = QLabel()
+        icon_label.setPixmap(QIcon("datas/icon.ico").pixmap(64, 64))
+        icon_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(icon_label)
+
+        # 软件名称
+        title = QLabel("DimCalculator")
+        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #0078d7;")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        # 版本号 + 作者
+        try:
+            with open("datas/config.json", "r", encoding="utf-8") as f:
+                config = json.load(f)
+            version = config.get("version", "版本信息获取失败")
+        except:
+            version = "版本信息获取失败"
+        version_label = QLabel(f"{version}\n作者：ljx-13")
+        version_label.setStyleSheet("font-size: 16px; color: #666;")
+        version_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(version_label)
+
+        # 分隔线
+        line = QLabel("─" * 30)
+        line.setStyleSheet("color: #ddd; font-size: 12px;")
+        line.setAlignment(Qt.AlignCenter)
+        layout.addWidget(line)
+
+        # 详细描述
+        desc = QLabel(
+            "智能量纲计算器\n"
+            "面向高中物理教学，支持带单位的表达式运算\n"
+        )
+        desc.setStyleSheet("font-size: 13px; color: #444; line-height: 1.6;")
+        desc.setAlignment(Qt.AlignCenter)
+        layout.addWidget(desc)
+
+        # 发布页链接
+        link_label = QLabel("""
+            发布页:<br>
+            <a href="https://github.com/ljx-13/DimCalculator/releases" style="color:#0078d7; text-decoration:none;">
+            github
+            </a><br>
+            <a href="https://gitee.com/ljx-13/dim-calculator/releases" style="color:#0078d7; text-decoration:none;">
+            gitee(推荐)
+            </a>
+        """)
+        link_label.setOpenExternalLinks(True)
+        link_label.setAlignment(Qt.AlignCenter)
+        link_label.setTextFormat(Qt.RichText)
+        layout.addWidget(link_label)
+
+        # 许可证
+        license_label = QLabel("MIT License")
+        license_label.setStyleSheet("font-size: 12px; color: #888;")
+        license_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(license_label)
+
+        layout.addStretch()
+
+        dialog.exec_()
+
     @catch_exceptions("打开用户手册时崩溃")
-    def open_help(self, checked=False):
+    def show_help(self, checked=False):
         """打开用户手册"""
         help_path = os.path.join(os.path.dirname(__file__), "..", "docs", "help.md")
         try:
@@ -459,6 +544,7 @@ class DimCalculatorGUI(QMainWindow):
             layout = QVBoxLayout(dialog)
             text_browser = QTextBrowser()
             text_browser.setReadOnly(True)
+            text_browser.setOpenExternalLinks(True)
             dialog.setStyleSheet("""
                 QDialog {
                     background-color: white;
@@ -500,12 +586,8 @@ class DimCalculatorGUI(QMainWindow):
         dialog.setWindowTitle("欢迎使用 DimCalculator")
         dialog.resize(500, 380)
         dialog.setStyleSheet("""
-            QDialog {
-                background-color: white;
-            }
-            QLabel {
-                font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-            }
+            QDialog {background-color: white;}
+            QLabel {font-family: "Segoe UI", "Microsoft YaHei", sans-serif;}
         """)
 
         layout = QVBoxLayout(dialog)
@@ -539,7 +621,7 @@ class DimCalculatorGUI(QMainWindow):
             "点击「帮助/用户手册」菜单可查看完整说明"
         )
         desc.setStyleSheet("font-size: 16px; color: #444; line-height: 1.8;")
-        desc.setAlignment(Qt.AlignLeft)
+        desc.setAlignment(Qt.AlignCenter)
         layout.addWidget(desc)
 
         layout.addStretch()
