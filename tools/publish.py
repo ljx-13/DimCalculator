@@ -67,11 +67,10 @@ def step_pack():
     )
     if run_cmd(cmd).returncode:
         print("打包失败！")
-        sys.exit(1)
     dist_dir = "dist/DimCalculator"
     if os.path.exists(dist_dir):
         os.makedirs(f"{dist_dir}/log", exist_ok=True)
-        for folder in ("src", "datas"):
+        for folder in ("src", "datas", "docs/"):
             if os.path.exists(folder):
                 shutil.copytree(folder, f"{dist_dir}/{folder}", dirs_exist_ok=True)
 
@@ -94,3 +93,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    input("按回车退出...")
