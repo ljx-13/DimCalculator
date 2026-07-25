@@ -43,15 +43,15 @@ def step_version(version):
     return version
 
 
-@confirm("[2/4] 确认提交信息并提交")
+@confirm("[2/4] 确认更新版本（请确认已经提交完毕）")
 def step_commit(version):
-    msg = input("提交信息 (留空=更新版本): ").strip()
-    if not msg:
-        msg = f"更新版本 {version}"
-    print(f"信息: {msg}")
-    run_cmd('git add .')
-    run_cmd(f'git tag -a "{version}" -m "{msg}"')
-    run_cmd(f'git commit -m "{msg}"')
+    # msg = input("版本信息信息 (留空=更新版本): ").strip()
+    # if not msg:
+    #     msg = f"更新版本 {version}"
+    # print(f"信息: {msg}")
+    # run_cmd('git add .')
+    # run_cmd(f'git commit -m "{msg}"')
+    run_cmd(f'git tag -a "{version}"')
     return version
 
 
@@ -67,19 +67,18 @@ def step_pack():
     )
     if run_cmd(cmd).returncode:
         print("打包失败！")
-        sys.exit(1)
     dist_dir = "dist/DimCalculator"
     if os.path.exists(dist_dir):
         os.makedirs(f"{dist_dir}/log", exist_ok=True)
-        for folder in ("src", "datas"):
+        for folder in ("datas", "docs/"):
             if os.path.exists(folder):
                 shutil.copytree(folder, f"{dist_dir}/{folder}", dirs_exist_ok=True)
 
 
 @confirm("[4/4] 确认推送")
 def step_push():
-    run_cmd('git push origin main')
-    run_cmd('git push gitee main')
+    run_cmd('git push origin main --follow-tags')
+    run_cmd('git push gitee main --follow-tags')
 
 
 def main():
@@ -94,3 +93,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    input("按回车退出...")

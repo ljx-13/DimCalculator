@@ -31,7 +31,6 @@ class DimCalculatorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.core = DimCalculatorCore()
-        self.is_convert_mode = False  # 标记是否处于单位转换模式]
         self.is_convert_mode = False
         self.unit_buttons = []
         self.const_buttons = []
