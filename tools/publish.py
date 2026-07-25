@@ -8,20 +8,22 @@ import shutil
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def ask(prompt, default="y"):
+def ask(prompt):
     while True:
         answer = input(prompt).strip().lower()
         if answer in ("y", "n", ""):
-            return answer if answer else default
+            return True if answer == "y" else False
         print("请输入 y 或 n")
 
 
-def confirm(prompt):
+def confirm(prompt, exit_=False):
     def decorator(func):
         def wrapper(*args, **kwargs):
             if ask(prompt):
                 return func(*args, **kwargs)
             else:
+                if exit_:
+                    exit(0)
                 print("跳过\n")
                 return None
 
@@ -33,24 +35,8 @@ def confirm(prompt):
 def run_cmd(cmd):
     return subprocess.run(cmd, shell=True)
 
-
-def get_version():
-    try:
-        with open("datas/config.json", "r", encoding="utf-8") as f:
-            return json.load(f).get("version", "").strip()
-    except:
-        return ""
-
-
-def print_header():
-    print("\n" + "=" * 40)
-    print("   DimCalculator 发布脚本")
-    print("=" * 40 + "\n")
-
-
-@confirm("[1/4] 确认版本号")
-def step_version():
-    version = get_version()
+@confirm("[1/4] 确认版本号", exit_=True)
+def step_version(version):
     if not version:
         version = input("未找到版本号，请输入: ").strip()
     print(f"版本: {version}")
@@ -97,29 +83,14 @@ def step_push():
 
 
 def main():
-    print_header()
-    version = get_version()
-    if version:
-        print(f"当前版本: {version}")
-    else:
-        version = input("请输入版本号: ").strip()
-
-    step_version()
+    with open("datas/config.json", "r", encoding="utf-8") as f:
+        version =  json.load(f).get("version", "").strip()
+    print(version)
+    step_version(version)
     step_commit(version)
     step_pack()
     step_push()
 
-    print("\n" + "=" * 40)
-    print("   ✓ 发布完成！")
-    print("=" * 40)
-    print(f"   版本: {version}")
-    print(f"   文件: dist/DimCalculator/DimCalculator.exe")
-    print("=" * 40)
-    input("\n按 Enter 退出...")
-
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n已取消")
+    main()
