@@ -376,6 +376,7 @@ class DimCalculatorCore:
         namespace['log'] = log
         namespace['lg'] = lambda x: log(x, 10)
         namespace['ln'] = lambda x: log(x, math.e)
+        namespace['mod'] = lambda a, b: a % b
         return namespace
 
     @staticmethod
