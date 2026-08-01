@@ -6,7 +6,7 @@
 
 **DimCalculator** 是一款为高中物理学习设计的智能量纲计算器。
 
-在高中物理学习中，单位换算是很多同学的易错点。本软件支持直接输入带单位的表达式（如 `5*m + 20*cm`），自动进行单位换算和量纲检查，并给出清晰的计算结果。
+在高中物理学习中，单位换算是很多同学的易错点。本软件支持直接输入带单位的表达式（如 `5m + 20cm`），自动进行单位换算和量纲检查，并给出清晰的计算结果。
 
 （本软件尚处于测试阶段，尚不稳定）
 
@@ -29,7 +29,67 @@
 
 ## 快速开始
 
+### 发布页
+
+- https://github.com/ljx-13/DimCalculator/releases
+- https://gitee.com/ljx-13/dim-calculator/releases （国内推荐）
+
 ### 环境要求
 
-- Python 3.12 或更高版本
 - Windows 10 及以上
+- Linux/macOS 可从源码运行，但未充分测试
+- Android/IOS 暂不支持
+
+### 从源码运行
+
+部分开发中的功能可能尚未提供发行版，您可以从源码运行
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/ljx-13/DimCalculator.git
+cd DimCalculator
+
+# 2. 创建并激活虚拟环境（推荐）
+python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux / macOS
+
+# 3. 安装依赖
+pip install -r requirements.txt
+
+# 4. 运行主程序
+python main.py
+
+# 5. 如需运行测试
+python tools/test.py
+
+# 6. 如需打包为exe
+pyinstaller --onedir --windowed --icon=datas/icon.ico --name DimCalculator --add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" main.py
+```
+
+## 项目结构
+
+```text
+DimCalculator/
+├── main.py  # 程序入口
+├── requirements.txt  # pip依赖
+├── LICENSE
+├── .gitignore
+├── fixme.txt  # 待修复bug及带完成目标
+├── src/  # 核心源代码
+│ ├── __init__.py
+│ ├── core.py  # 计算引擎
+│ └── gui.py  # 界面
+├── datas/  # 资源文件
+│ ├── config.json  # 配置文件
+│ ├── units.json  # 单位
+│ ├── consts.json  # 物理常数
+│ └── icon.ico  # 程序图标
+├── docs/  # 文档
+│ ├── help.md  # 用户手册
+│ └── images/  # README 演示图片
+└── tools/  # 工具脚本
+  ├── publish.py  # 打包发布
+  ├── reset.py  # 重置
+  └── test.py  # 测试
+```
