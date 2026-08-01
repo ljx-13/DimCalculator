@@ -450,7 +450,7 @@ class DimCalculatorGUI(QMainWindow):
         dialog = QDialog(self)
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         dialog.setWindowTitle("关于 DimCalculator")
-        dialog.setFixedSize(420, 420)
+        dialog.setFixedSize(420, 400)
         dialog.setStyleSheet("""
             QDialog { background-color: white; }
             QLabel { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
@@ -481,7 +481,7 @@ class DimCalculatorGUI(QMainWindow):
             version = config.get("version", "版本信息获取失败")
         except:
             version = "版本信息获取失败"
-        version_label = QLabel(f"{version}\n作者：ljx-13")
+        version_label = QLabel(f"{version}  |  作者：ljx-13")
         version_label.setStyleSheet("font-size: 16px; color: #666;")
         version_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(version_label)
@@ -495,7 +495,8 @@ class DimCalculatorGUI(QMainWindow):
         # 详细描述
         desc = QLabel(
             "智能量纲计算器\n"
-            "面向高中物理教学，支持带单位的表达式运算\n"
+            "面向高中物理教学\n"
+            "支持带单位的表达式运算\n"
         )
         desc.setStyleSheet("font-size: 13px; color: #444; line-height: 1.6;")
         desc.setAlignment(Qt.AlignCenter)
@@ -506,7 +507,7 @@ class DimCalculatorGUI(QMainWindow):
             发布页:<br>
             <a href="https://github.com/ljx-13/DimCalculator/releases" style="color:#0078d7; text-decoration:none;">
             github
-            </a><br>
+            </a>&nbsp;&nbsp;&nbsp;
             <a href="https://gitee.com/ljx-13/dim-calculator/releases" style="color:#0078d7; text-decoration:none;">
             gitee(推荐)
             </a>
