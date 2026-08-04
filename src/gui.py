@@ -46,54 +46,12 @@ class DimCalculatorGUI(QMainWindow):
         self.setMinimumSize(800, 750)
         # self.setMaximumWidth(1250)
         self.setWindowIcon(QIcon("datas/icon.ico"))
-        self.setStyleSheet("""
-            QMainWindow { background-color: #f3f3f3; }
-            QMenuBar {
-                background-color: #f3f3f3;
-                border: none;
-                color: #333;
-            }
-            QMenuBar::item:selected {
-                background-color: #e0e0e0;
-            }
-            QLineEdit#exprEdit {
-                font-size: 20px;
-                color: #505050;
-                padding: 10px;
-                border: 1px solid #e0e0e0;
-                border-radius: 8px;
-                background-color: white;
-            }
-            QLabel#resultLabel {
-                font-size: 40px;
-                font-weight: bold;
-                color: #000000;
-                padding: 10px;
-            }
-            QPushButton {
-                font-size: 25px;
-                font-weight: 500;
-                border-radius: 30px;
-                background-color: #ffffff;
-                border: 1px solid #dddddd;
-                min-width: 60px;
-                min-height: 60px;
-            }
-            QPushButton:hover { background-color: #e6e6e6; }
-            QPushButton:pressed { background-color: #cccccc; }
-            QPushButton#opBtn:checked {background-color: #cccccc;  /* 和数字按钮按下的灰色完全一致 */}
-            QPushButton#opBtn { background-color: #f0f0f0; font-weight: bold; color: #0078d7; }
-            QPushButton#unitBtn { background-color: #f9f9f9; font-size: 20px; }
-            QGroupBox {
-                font-weight: bold;
-                margin-top: 10px;
-                border: 1px solid #dddddd;
-                border-radius: 8px;
-                background-color: #ffffff;
-            }
-            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }
-            QTextEdit { border-radius: 8px; border: 1px solid #dddddd; background-color: #ffffff; font-size: 14px; }
-        """)
+        # 加载样式表
+        try:
+            with open("ui/style.qss", "r", encoding="utf-8") as f:
+                self.setStyleSheet(f.read())
+        except Exception as e:
+            logging.warning(f"样式表加载失败: {e}")
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -132,6 +90,7 @@ class DimCalculatorGUI(QMainWindow):
         ]
         for text, row, col, is_op, tip in buttons:
             btn = QPushButton(text)
+            btn.setObjectName("numBtn")
             if text == "单位转换":
                 btn.setCheckable(True)
             if is_op:
@@ -231,7 +190,20 @@ class DimCalculatorGUI(QMainWindow):
 
         # 历史记录按钮
         hist_btn = QPushButton("历史记录")
-        hist_btn.setObjectName("opBtn")
+        hist_btn.setStyleSheet("""
+            QPushButton {
+                font-size: 18px;
+                font-weight: 500;
+                border-radius: 20px;
+                background-color: #f0f0f0;
+                border: 1px solid #dddddd;
+                min-width: 80px;
+                min-height: 40px;
+                color: #333;
+            }
+            QPushButton:hover { background-color: #e6e6e6; }
+            QPushButton:pressed { background-color: #cccccc; }
+        """)
         hist_btn.clicked.connect(self.show_history)
         main_layout.addWidget(hist_btn)
 
@@ -416,7 +388,6 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("处理历史记录时崩溃")
     def show_history(self, checked=False):
-        """展示历史记录"""
         if not self.core.history:
             QMessageBox.information(self, "历史记录", "暂无历史记录")
             return
@@ -451,7 +422,6 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("打开关于窗口时崩溃")
     def show_about(self, checked=False):
-        """显示关于对话框"""
         dialog = QDialog(self)
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         dialog.setWindowTitle("关于 DimCalculator")
@@ -534,7 +504,6 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("打开用户手册时崩溃")
     def show_help(self, checked=False):
-        """打开用户手册"""
         try:
             with open("docs/help.md", "r", encoding="utf-8") as f:
                 content = f.read()
@@ -584,7 +553,6 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("打开欢迎窗口时崩溃")
     def show_welcome(self, checked=False):
-        """打开欢迎窗口"""
         dialog = QDialog(self)
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         dialog.setWindowTitle("欢迎使用 DimCalculator")
@@ -641,6 +609,8 @@ class DimCalculatorGUI(QMainWindow):
                 padding: 10px 0;
                 font-size: 20px;
                 font-weight: bold;
+                min-width: 120px;
+                min-height: 45px;
             }
             QPushButton:hover {
                 background-color: #005a9e;

@@ -1,0 +1,102 @@
+QMainWindow {
+    background-color: #f3f3f3;
+}
+
+QMenuBar {
+    background-color: #f3f3f3;
+    border: none;
+    color: #333;
+}
+QMenuBar::item:selected {
+    background-color: #e0e0e0;
+}
+
+QLineEdit#exprEdit {
+    font-size: 20px;
+    color: #505050;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: white;
+}
+
+QLabel#resultLabel {
+    font-size: 40px;
+    font-weight: bold;
+    color: #000000;
+    padding: 10px;
+}
+
+/* 运算符按钮 */
+QPushButton#opBtn {
+    font-size: 25px;
+    font-weight: 500;
+    border-radius: 30px;
+    background-color: #f0f0f0;
+    border: 1px solid #dddddd;
+    min-width: 60px;
+    min-height: 60px;
+    color: #0078d7;
+}
+QPushButton#opBtn:hover {
+    background-color: #e6e6e6;
+}
+QPushButton#opBtn:pressed {
+    background-color: #cccccc;
+}
+QPushButton#opBtn:checked {
+    background-color: #cccccc;
+}
+
+/* 单位/常数/函数按钮 */
+QPushButton#unitBtn {
+    background-color: #f9f9f9;
+    font-size: 20px;
+    border-radius: 30px;
+    border: 1px solid #dddddd;
+    min-width: 50px;
+    min-height: 50px;
+}
+QPushButton#unitBtn:hover {
+    background-color: #e6e6e6;
+}
+QPushButton#unitBtn:pressed {
+    background-color: #cccccc;
+}
+
+/* 数字按钮 */
+QPushButton#numBtn {
+    font-size: 25px;
+    font-weight: 500;
+    border-radius: 30px;
+    background-color: #ffffff;
+    border: 1px solid #dddddd;
+    min-width: 60px;
+    min-height: 60px;
+}
+QPushButton#numBtn:hover {
+    background-color: #e6e6e6;
+}
+QPushButton#numBtn:pressed {
+    background-color: #cccccc;
+}
+
+QGroupBox {
+    font-weight: bold;
+    margin-top: 10px;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 5px;
+}
+
+QTextEdit {
+    border-radius: 8px;
+    border: 1px solid #dddddd;
+    background-color: #ffffff;
+    font-size: 14px;
+}
