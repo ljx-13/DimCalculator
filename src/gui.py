@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel
     QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog, QAction, QTextBrowser, QScrollArea
 # from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.uic import loadUi
 
 from .core import DimCalculatorCore
 
@@ -273,8 +274,12 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("创建菜单栏时崩溃")
     def _create_menubar(self):
-        """创建菜单栏"""
         menubar = self.menuBar()
+
+        setting_Menu = menubar.addMenu("设置")
+        setting_action = QAction("设置", self)
+        setting_action.triggered.connect(self.show_settings)
+        setting_Menu.addAction(setting_action)
 
         help_menu = menubar.addMenu("帮助")
         welcome_action = QAction("欢迎", self)
@@ -643,6 +648,35 @@ class DimCalculatorGUI(QMainWindow):
         """)
         btn.clicked.connect(dialog.accept)
         layout.addWidget(btn)
+
+        dialog.exec_()
+
+    @catch_exceptions("打开设置页面时崩溃")
+    def show_settings(self, checked=False):
+        dialog = QDialog(self)
+        loadUi("ui/settings.ui", dialog)
+
+        def reset():
+            dialog.precisionCombo.setCurrentIndex(0)
+            dialog.chooseFontSize.setValue(14)
+            dialog.checkUnusualUnit.setChecked(False)
+            dialog.checkUnusualFunc.setChecked(False)
+            dialog.startDebug.setChecked(False)
+            dialog.output2infoArea.setChecked(False)
+
+        def save():
+            precision = dialog.precisionCombo.currentIndex()
+            font_size = dialog.chooseFontSize.value()
+            show_unusual_unit = dialog.checkUnusualUnit.isChecked()
+            show_unusual_func = dialog.checkUnusualFunc.isChecked()
+            debug_mode = dialog.startDebug.isChecked()
+            log_to_info = dialog.output2infoArea.isChecked()
+            dialog.accept()
+
+        # 连接信号槽
+        dialog.ok.clicked.connect(lambda: save())
+        dialog.cancle.clicked.connect(dialog.reject)
+        dialog.reset.clicked.connect(lambda: reset())
 
         dialog.exec_()
 
