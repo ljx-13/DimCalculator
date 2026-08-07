@@ -433,10 +433,12 @@ class DimCalculatorGUI(QMainWindow):
         close_btn.clicked.connect(dialog.accept)
 
         def clear_history():
+            yes = QMessageBox.information(dialog, "确认", "是否清空历史记录？", QMessageBox.Yes, QMessageBox.No)
+            if yes == QMessageBox.No:
+                return
             self.core.history.clear()
             table.clearContents()
             table.setRowCount(0)
-            QMessageBox.information(dialog, "提示", "历史记录已清空")
 
         clear_btn.clicked.connect(clear_history)
 
@@ -656,6 +658,9 @@ class DimCalculatorGUI(QMainWindow):
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
         def reset():
+            yes = QMessageBox.information(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes, QMessageBox.No)
+            if yes == QMessageBox.No:
+                return
             dialog.precisionCombo.setCurrentIndex(0)
             dialog.chooseFontSize.setValue(14)
             dialog.checkUnusualUnit.setChecked(False)
