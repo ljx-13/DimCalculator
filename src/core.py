@@ -546,7 +546,7 @@ class DimCalculatorCore:
             return result
         return str(value)
 
-    def _to_preferred(self, result: "pint.Quantity"):
+    def _to_preferred(self, result: "pint.Quantity") -> pint.Quantity | int| float:
         """将Quantity的单位转换到通用单位"""
         if isinstance(result, pint.Quantity):
             # 如果是无量纲，直接返回数值
@@ -609,13 +609,16 @@ class DimCalculatorCore:
             result = self._safe_eval(exper)
             loger.debug(f"original result: {result}")
             # 格式化输出
-            if isinstance(result, pint.Quantity) and not result.dimensionless:
+            if isinstance(result, pint.Quantity):
                 # 紧凑格式：5m 而不是 5 meter
                 try:
                     # 智能格式化数值
                     result = self._to_preferred(result)
                     loger.debug(f"to preferred: {result}")
-                    mag = result.magnitude
+                    if isinstance(result, pint.Quantity):
+                        mag = result.magnitude
+                    else:
+                        mag = result
                     mag_str = self._round_magnitude(mag)
                     result_str = f"{mag_str}{result.units:~}".replace(" ", "")
                     loger.debug("format: " + result_str)
