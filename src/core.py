@@ -21,7 +21,7 @@ class DimCalculatorCore:
         self.__consts = self._load_consts(constants_file)
         self.history = []
         """(exper, result_str)"""
-        self.last_ans = "0"
+        self.last_ans: str = "0"
         self.namespace = self._build_namespace()
 
     @property
@@ -635,6 +635,8 @@ class DimCalculatorCore:
         else:
             # 记录历史
             self.history.append((original_exper, result_str))
+            if len(self.history) > 200:
+                self.history.pop(0)
             self.last_ans = result_str
             return self._format_scientific(result_str), None
 
@@ -645,7 +647,7 @@ class DimCalculatorCore:
         """
         try:
             # 解析 last_ans 为 pint.Quantity
-            q = self.ureg.parse_expression(self.last_ans)
+            q = self.ureg.parse_expression(self.last_ans)  # todo: eval
             # 转换为目标单位
             converted = q.to(target_unit)
             # 格式化输出

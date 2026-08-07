@@ -188,25 +188,6 @@ class DimCalculatorGUI(QMainWindow):
         self.info_text.setMaximumHeight(300)
         main_layout.addWidget(self.info_text)
 
-        # 历史记录按钮
-        hist_btn = QPushButton("历史记录")
-        hist_btn.setStyleSheet("""
-            QPushButton {
-                font-size: 18px;
-                font-weight: 500;
-                border-radius: 20px;
-                background-color: #f0f0f0;
-                border: 1px solid #dddddd;
-                min-width: 80px;
-                min-height: 40px;
-                color: #333;
-            }
-            QPushButton:hover { background-color: #e6e6e6; }
-            QPushButton:pressed { background-color: #cccccc; }
-        """)
-        hist_btn.clicked.connect(self.show_history)
-        main_layout.addWidget(hist_btn)
-
         self._create_menubar()
 
         self.resize(800, 750)
@@ -248,21 +229,26 @@ class DimCalculatorGUI(QMainWindow):
     def _create_menubar(self):
         menubar = self.menuBar()
 
-        setting_Menu = menubar.addMenu("设置")
-        setting_action = QAction("设置", self)
-        setting_action.triggered.connect(self.show_settings)
-        setting_Menu.addAction(setting_action)
+        setting_menu = menubar.addMenu("设置")
+        setting = QAction("设置", self)
+        setting.triggered.connect(self.show_settings)
+        setting_menu.addAction(setting)
+
+        memory_menu = menubar.addMenu("记忆")
+        history = QAction("历史记录", self)
+        history.triggered.connect(self.show_history)
+        memory_menu.addAction(history)
 
         help_menu = menubar.addMenu("帮助")
-        welcome_action = QAction("欢迎", self)
-        welcome_action.triggered.connect(self.show_welcome)
-        help_menu.addAction(welcome_action)
-        help_action = QAction("用户手册", self)
-        help_action.triggered.connect(self.show_help)
-        help_menu.addAction(help_action)
-        about_action = QAction("关于", self)
-        about_action.triggered.connect(self.show_about)
-        help_menu.addAction(about_action)
+        welcome = QAction("欢迎", self)
+        welcome.triggered.connect(self.show_welcome)
+        help_menu.addAction(welcome)
+        help_ = QAction("用户手册", self)
+        help_.triggered.connect(self.show_help)
+        help_menu.addAction(help_)
+        about = QAction("关于", self)
+        about.triggered.connect(self.show_about)
+        help_menu.addAction(about)
 
     @catch_exceptions("更新右侧面板按钮列数时崩溃")
     def update_button_layout(self):
@@ -391,33 +377,99 @@ class DimCalculatorGUI(QMainWindow):
         if not self.core.history:
             QMessageBox.information(self, "历史记录", "暂无历史记录")
             return
-        # 创建对话框
+
+        from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView
+
         dialog = QDialog(self)
         dialog.setWindowTitle("历史记录")
-        dialog.resize(600, 400)
+        dialog.resize(700, 500)
+
         layout = QVBoxLayout(dialog)
-        # 文本显示区域
-        text_edit = QTextEdit()
-        text_edit.setReadOnly(True)
-        text_edit.setFont(QFont("Consolas", 10))
-        # 格式化历史文本（支持序号或直接显示）
-        history_lines = []
-        for idx, (expr, res) in enumerate(self.core.history, 1):
-            history_lines.append(f"{idx}. {expr} = {res}")
-        history_text = "\n".join(history_lines)
-        text_edit.setText(history_text)
-        layout.addWidget(text_edit)
-        # 按钮栏
+
+        # 表格
+        table = QTableWidget()
+        table.setColumnCount(3)
+        table.setHorizontalHeaderLabels(["序号", "表达式", "结果"])
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        table.verticalHeader().setVisible(False)
+        table.setAlternatingRowColors(True)
+        table.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #e0e0e0;
+                font-size: 13px;
+            }
+            QTableWidget::item {
+                padding: 6px 10px;
+            }
+            QHeaderView::section {
+                background-color: #f0f0f0;
+                padding: 6px 10px;
+                font-weight: bold;
+                border: none;
+                border-bottom: 1px solid #ddd;
+            }
+            QTableWidget::item:selected {
+                background-color: #cce4ff;
+            }
+        """)
+
+        table.setRowCount(len(self.core.history))
+        for idx, (expr, res) in enumerate(self.core.history):
+            table.setItem(idx, 0, QTableWidgetItem(str(idx + 1)))
+            table.setItem(idx, 1, QTableWidgetItem(expr))
+            table.setItem(idx, 2, QTableWidgetItem(res))
+            # 居中对齐序号和结果
+            table.item(idx, 0).setTextAlignment(Qt.AlignCenter)
+            table.item(idx, 2).setTextAlignment(Qt.AlignCenter)
+
+        layout.addWidget(table)
+
+        # 底部按钮
         btn_layout = QHBoxLayout()
         clear_btn = QPushButton("清空历史")
-        btn_layout.addWidget(clear_btn)
-        layout.addLayout(btn_layout)
-        # 清空功能
+        clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 20px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+        """)
+        close_btn = QPushButton("关闭")
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 8px 20px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;
+            }
+        """)
+        close_btn.clicked.connect(dialog.accept)
+
         def clear_history():
             self.core.history.clear()
-            text_edit.clear()
+            table.clearContents()
+            table.setRowCount(0)
             QMessageBox.information(dialog, "提示", "历史记录已清空")
+
         clear_btn.clicked.connect(clear_history)
+
+        btn_layout.addStretch()
+        btn_layout.addWidget(clear_btn)
+        btn_layout.addWidget(close_btn)
+        layout.addLayout(btn_layout)
+
         dialog.exec_()
 
     @catch_exceptions("打开关于窗口时崩溃")
@@ -529,7 +581,6 @@ class DimCalculatorGUI(QMainWindow):
                     padding: 20px;
                     font-size: 18px;
                     font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-                    line-height: 1.8;
                 }
                 QScrollBar:vertical {
                     background: transparent;
