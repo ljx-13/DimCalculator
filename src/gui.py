@@ -379,6 +379,7 @@ class DimCalculatorGUI(QMainWindow):
         from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView
 
         dialog = QDialog(self)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         dialog.setWindowTitle("历史记录")
         dialog.resize(700, 500)
 
@@ -427,32 +428,8 @@ class DimCalculatorGUI(QMainWindow):
         # 底部按钮
         btn_layout = QHBoxLayout()
         clear_btn = QPushButton("清空历史")
-        clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 20px;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-        """)
+        clear_btn.setStyleSheet("color: red;")
         close_btn = QPushButton("关闭")
-        close_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f0f0f0;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                padding: 8px 20px;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-            }
-        """)
         close_btn.clicked.connect(dialog.accept)
 
         def clear_history():
@@ -672,10 +649,11 @@ class DimCalculatorGUI(QMainWindow):
         dialog.exec_()
 
     @catch_exceptions("打开设置页面时崩溃")
-    def show_settings(self, checked=False):
+    def show_settings(self, checked=False):  # todo
         dialog = QDialog(self)
         from PyQt5.uic import loadUi
         loadUi("ui/settings.ui", dialog)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
         def reset():
             dialog.precisionCombo.setCurrentIndex(0)
