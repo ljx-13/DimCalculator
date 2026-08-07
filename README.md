@@ -71,25 +71,30 @@ pyinstaller --onedir --windowed --icon=datas/icon.ico --name DimCalculator --add
 
 ```text
 DimCalculator/
-├── main.py  # 程序入口
-├── requirements.txt  # pip依赖
-├── LICENSE
-├── .gitignore
-├── fixme.txt  # 待修复bug及带完成目标
-├── src/  # 核心源代码
-│ ├── __init__.py
-│ ├── core.py  # 计算引擎
-│ └── gui.py  # 界面
-├── datas/  # 资源文件
-│ ├── config.json  # 配置文件
-│ ├── units.json  # 单位
-│ ├── consts.json  # 物理常数
-│ └── icon.ico  # 程序图标
-├── docs/  # 文档
-│ ├── help.md  # 用户手册
-│ └── images/  # README 演示图片
-└── tools/  # 工具脚本
-  ├── publish.py  # 打包发布
-  ├── reset.py  # 重置
-  └── test.py  # 测试
+   ├── .gitignore
+   ├── LICENSE
+   ├── README.md
+   ├── datas/  # 数据文件
+   │   ├── config.json  # 配置文件
+   │   ├── consts.json  # 常量
+   │   ├── icon.ico
+   │   └── units.json  # 单位
+   ├── docs/
+   │   ├── help.md  # 帮助文档
+   │   └── images/  # 演示图片
+   ├── fixme.txt  # 待修复bug及开发计划
+   ├── main.py
+   ├── requirements.txt
+   ├── src/  # 源代码
+   │   ├── __init__.py
+   │   ├── core.py  # 计算引擎
+   │   └── gui.py  # 桌面端界面
+   ├── tools/
+   │   ├── publish.py  # 更新版本打包发布（自用）
+   │   ├── reset.py  # 重置设置
+   │   ├── test.py  # 测试
+   │   └── tree.py  # 获取项目结构
+   └── ui/
+       ├── settings.ui  # 设置界面
+       └── style.qss  # 样式表
 ```
