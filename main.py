@@ -14,6 +14,9 @@ from logging.handlers import RotatingFileHandler
 from PyQt5 import __file__ as pyqt5_file
 
 
+os.makedirs("log", exist_ok=True)
+logging.getLogger("PyQt5.uic").setLevel(logging.WARNING)
+
 # 【本地运行 + 打包后 双兼容】
 if getattr(sys, 'frozen', False):
     # 打包后：从exe临时目录找
