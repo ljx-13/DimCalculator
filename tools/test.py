@@ -1,14 +1,18 @@
+"""测试"""
+
 import logging
+import os
 import sys
 
 from core import DimCalculatorCore
 
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
 sys.stdout.reconfigure(encoding='utf-8')
 logging.basicConfig(level=logging.ERROR,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                     )
 
-calc = DimCalculatorCore(units_file="../datas/units.json", constants_file="../datas/consts.json")
+calc = DimCalculatorCore(units_file="datas/units.json", constants_file="datas/consts.json")
 
 def test(expr, expected_contains=None, should_error=False, verbose=True):
     """简单的测试函数"""

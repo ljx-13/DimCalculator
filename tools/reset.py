@@ -1,16 +1,19 @@
+"""重置设置"""
+import os
 import json
+
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
+
 if input("确定要恢复初始状态吗？（y/n）") == "y":
     try:
-        with open("../datas/config.json", "r", encoding="utf-8") as f:
+        with open("datas/config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
             config["first_run"] = True
-        with open("../datas/config.json", "w", encoding="utf-8") as f:
+        with open("datas/config.json", "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False)
     except:
         raise
     else:
         print("完成")
     finally:
-        input()
-else:
-    input("已取消")
+        input("回车退出...")

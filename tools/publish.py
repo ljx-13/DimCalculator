@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+"""更新版本，打包发布（自用）"""
+
 import os
 import sys
 import json
