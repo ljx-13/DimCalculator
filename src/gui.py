@@ -1,15 +1,13 @@
 import json
-import os
 import traceback
 from functools import wraps
 import logging
 
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QPushButton, \
-    QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog, QAction, QTextBrowser, QScrollArea
+    QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog, QAction, QScrollArea
 # from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.uic import loadUi
 
 from .core import DimCalculatorCore
 
@@ -556,6 +554,7 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("打开用户手册时崩溃")
     def show_help(self, checked=False):
+        from PyQt5.QtWidgets import QTextBrowser
         try:
             with open("docs/help.md", "r", encoding="utf-8") as f:
                 content = f.read()
@@ -675,6 +674,7 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("打开设置页面时崩溃")
     def show_settings(self, checked=False):
         dialog = QDialog(self)
+        from PyQt5.uic import loadUi
         loadUi("ui/settings.ui", dialog)
 
         def reset():
