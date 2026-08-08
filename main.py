@@ -63,6 +63,8 @@ if __name__ == '__main__':
     try:
         # raise SyntaxError
         app = MyApplication(sys.argv)
+        app.setAttribute(Qt.AA_EnableHighDpiScaling, True)  # 启用高 DPI 缩放
+        app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)  # 使用高 DPI 图标
         # 创建启动画面
         from PyQt5.QtGui import QPainter, QColor, QPixmap, QFont, QPixmap
         splash_pixmap = QPixmap(400, 300)

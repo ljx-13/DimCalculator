@@ -2,7 +2,7 @@
 import os
 import json
 
-os.chdir(os.path.dirname(os.path.dirname(__file__)))
+os.chdir(os.path.dirname(os.path.dirname(__file__)))  # type: ignore
 
 if input("确定要恢复初始状态吗？（y/n）") == "y":
     try:
