@@ -251,7 +251,7 @@ class DimCalculatorCore:
         return formatted + unit_part
 
     @lru_cache(maxsize=128)  # 缓存计算结果
-    def _safe_eval(self, exper: str) -> "pint.Quantity | int | float":
+    def _safe_eval(self, exper: str) -> pint.Quantity | int | float:
         """
         安全计算表达式，支持单位和数学函数。
         :return: pint.Quantity或数值。
@@ -535,7 +535,7 @@ class DimCalculatorCore:
         # (-?\d+)    捕获组2：指数，可带负号
         result = re.sub(
             r'(\d+(?:\.\d+)?)[eE]\+?(-?\d+)',
-            lambda m: f"{m.group(1)}×10{''.join(SUPER_SCRIPT.get(c, c) for c in m.group(2))}",
+            lambda m: f"{m.group(1)}×10{''.join(SUPER_SCRIPT.get(c, c) for c in m.group(2))}",  # type: ignore
             result
         )
         # 处理 ** 指数：优先匹配小数，再匹配整数
@@ -546,7 +546,7 @@ class DimCalculatorCore:
             if '.' in exp:
                 return f"^{exp}"
             else:
-                return ''.join(SUPER_SCRIPT.get(c, c) for c in exp)
+                return ''.join(SUPER_SCRIPT.get(c, c) for c in exp)  # type: ignore
         result = (re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result))
         result = result.replace("*", "⋅")
         loger.debug(f"format scientific: {result}")

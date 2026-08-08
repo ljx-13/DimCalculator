@@ -371,7 +371,7 @@ class DimCalculatorGUI(QMainWindow):
             self.result_label.setText("错误")
             self.info_text.setText(error_msg)
         else:
-            self.result_label.setText(result_str)
+            self.result_label.setText(result_str)  # type: ignore
             self.info_text.clear()
 
     @catch_exceptions("处理历史记录时崩溃")
@@ -383,7 +383,7 @@ class DimCalculatorGUI(QMainWindow):
         from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView
 
         dialog = QDialog(self)
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
         dialog.setWindowTitle("历史记录")
         dialog.resize(700, 500)
 
@@ -456,7 +456,7 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("打开关于窗口时崩溃")
     def show_about(self, checked=False):
         dialog = QDialog(self)
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
         dialog.setWindowTitle("关于 DimCalculator")
         dialog.setFixedSize(420, 400)
         dialog.setStyleSheet("""
@@ -545,7 +545,7 @@ class DimCalculatorGUI(QMainWindow):
             QMessageBox.warning(self, "提示", f"用户手册加载失败: {e}")
         else:
             dialog = QDialog(self)
-            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
             dialog.setWindowTitle("用户手册")
             dialog.resize(700, 700)
             layout = QVBoxLayout(dialog)
@@ -587,7 +587,7 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("打开欢迎窗口时崩溃")
     def show_welcome(self, checked=False):
         dialog = QDialog(self)
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
         dialog.setWindowTitle("欢迎使用 DimCalculator")
         dialog.resize(500, 380)
         dialog.setStyleSheet("""
@@ -657,9 +657,9 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("打开设置页面时崩溃")
     def show_settings(self, checked=False):  # todo
         dialog = QDialog(self)
-        from PyQt5.uic import loadUi
+        from PyQt5.uic import loadUi  # type: ignore
         loadUi("ui/settings.ui", dialog)
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
         # 初始化
         # 精度设置
         precision_combo = dialog.precisionCombo
