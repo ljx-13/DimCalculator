@@ -15,10 +15,14 @@ loger = logging.getLogger(__name__)
 
 class DimCalculatorCore:
     """核心计算类，支持超时控制和错误诊断"""
-    def __init__(self, units_file="datas/units.json", constants_file="datas/consts.json"):
+    def __init__(self, units_file="datas/units.json", constants_file="datas/consts.json", precision=12):
+        """
+        :param precision: 命名空间中常量精度
+        """
         self.ureg = ureg
         self.__units = self._load_units(units_file)
         self.__consts = self._load_consts(constants_file)
+        self.precision = precision
         self.history = []
         """(exper, result_str)"""
         self.last_ans: str = "0"
@@ -43,7 +47,7 @@ class DimCalculatorCore:
                  .replace("[", "(").replace("]", ")").replace("{", "(").replace("}", ")")
                  .replace("√(", "sqrt(").replace("%", "/100")
                  .replace("ans", self.last_ans)#.replace("π", str(self.consts[0][3]))
-                 )
+            )
         # 上标数字转普通格式（连续上标整体替换）
         # 匹配连续上标字符（如 ²³ → 23）
         map_ = {k: v for v, k in SUPER_SCRIPT.items()}
@@ -81,7 +85,7 @@ class DimCalculatorCore:
     @staticmethod
     def _replace_if_surrounded_by_math(exp, sym: str, name: str):
         """在exp中sym两边都是数字或数学符号时，把exp中的sym替换成name"""
-        allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")
+        allowed = set("0123456789+-*/^%!()[]{}×÷·: \t_")  # todo: ~
         result = []
         i = 0
         n = len(exp)
@@ -223,6 +227,29 @@ class DimCalculatorCore:
         loger.debug("insert *: " + exp)
         return exp
 
+    @staticmethod
+    def _round_quantity_str(value_str: str, precision: int) -> str:
+        """按有效数字四舍五入quantity格式字符串中的数值部分"""
+        import re
+        # 匹配开头的数值（含科学计数法）
+        # ^ 从字符串开头匹配
+        # ([\d.]+(?:e[+-]?\d+)?) 捕获组：
+        #   [\d.]+     匹配数字和小数点（如 9.80665 或 299792458）
+        #   (?:        非捕获组，用于组合
+        #       e          匹配字母 e（科学计数法标志）
+        #       [+-]?      可选的正号或负号
+        #       \d+        一个或多个数字（指数部分）
+        #   )?         整个科学计数法部分可选
+        match = re.match(r'^([\d.]+(?:e[+-]?\d+)?)', value_str)
+        if not match:
+            return value_str
+        num_str = match.group(1)
+        unit_part = value_str[len(num_str):]
+        num = float(num_str)
+        # 使用 .g 格式：根据 precision 位有效数字
+        formatted = f"{num:.{precision}g}"
+        return formatted + unit_part
+
     @lru_cache(maxsize=128)  # 缓存计算结果
     def _safe_eval(self, exper: str) -> "pint.Quantity | int | float":
         """
@@ -321,7 +348,7 @@ class DimCalculatorCore:
         namespace.update(basic_units)
         # 常数
         for name, _, _, value_str in self.consts:
-            namespace[name] = ureg.parse_expression(value_str)
+            namespace[name] = ureg.parse_expression(self._round_quantity_str(value_str, self.precision))
         # 数学常数和函数
         def trigonometric(f, x):
             """三角函数"""
@@ -378,6 +405,11 @@ class DimCalculatorCore:
         namespace['ln'] = lambda x: log(x, math.e)
         namespace['mod'] = lambda a, b: a % b
         return namespace
+
+    def update_namespace(self):
+        logging.info(f"update namespace: precision={self.precision}")
+        self.namespace = self._build_namespace()
+        self._safe_eval.cache_clear()
 
     @staticmethod
     def diagnose_error(error: Exception) -> str:  # todo: 角度弧度

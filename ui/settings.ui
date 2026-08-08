@@ -104,32 +104,32 @@ QCheckBox {
         <widget class="QComboBox" name="precisionCombo">
          <item>
           <property name="text">
-           <string>高中物理大题（g=10m/s²）</string>
+           <string>高中物理大题（1位有效数字）</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>高中普通计算（g=9.8m/s²）</string>
+           <string>高中普通计算（2位有效数字）</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>大学标准（4位）</string>
+           <string>大学标准（4位有效数字）</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>大学高精度（6位）</string>
+           <string>大学高精度（6位有效数字）</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>最高精度（12位）</string>
+           <string>最高精度（12位有效数字）</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>自定义</string>
+           <string>自定义（在下方输入框填写有效数字位数）</string>
           </property>
          </item>
         </widget>

@@ -29,12 +29,16 @@ def catch_exceptions(msg=""):
 class DimCalculatorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.core = DimCalculatorCore()
         self.is_convert_mode = False
         self.unit_buttons = []
         self.const_buttons = []
         self.func_buttons = []
         self.panel_cols = 3  # 右侧面板共用列数
+        self.precisionMode = 0
+        self.precisionSet = 12
+        self.precision = 1
+        self.load_settings()
+        self.core = DimCalculatorCore(precision=self.precision)
         self.initUI()
         QTimer.singleShot(100, self.update_button_layout)
 
@@ -656,12 +660,23 @@ class DimCalculatorGUI(QMainWindow):
         from PyQt5.uic import loadUi
         loadUi("ui/settings.ui", dialog)
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        # 初始化
+        # 精度设置
+        precision_combo = dialog.precisionCombo
+        precision_spin = dialog.precisionSet
+        update_precision_state = lambda index: precision_spin.setEnabled(index == 5)  # 自定义项索引为5
+        precision_combo.currentIndexChanged.connect(update_precision_state)
+        precision_combo.setCurrentIndex(self.precisionMode)
+        precision_spin.setValue(self.precisionSet)
+        update_precision_state(self.precisionMode)
 
         def reset():
             yes = QMessageBox.information(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes, QMessageBox.No)
             if yes == QMessageBox.No:
                 return
             dialog.precisionCombo.setCurrentIndex(0)
+            precision_spin.setValue(12)
+            precision_spin.setEnabled(False)
             dialog.chooseFontSize.setValue(14)
             dialog.checkUnusualUnit.setChecked(False)
             dialog.checkUnusualFunc.setChecked(False)
@@ -669,13 +684,19 @@ class DimCalculatorGUI(QMainWindow):
             dialog.output2infoArea.setChecked(False)
 
         def save():
-            precision = dialog.precisionCombo.currentIndex()
+            self.precisionMode = precision_combo.currentIndex()
+            self.precisionSet = precision_spin.value()
+            precision = self.precisionSet if self.precisionMode == 5 else [1, 2, 4, 6, 12][self.precisionMode]
+            if self.precision != precision:
+                self.core.precision = self.precision = precision
+                self.core.update_namespace()
             font_size = dialog.chooseFontSize.value()
             show_unusual_unit = dialog.checkUnusualUnit.isChecked()
             show_unusual_func = dialog.checkUnusualFunc.isChecked()
             debug_mode = dialog.startDebug.isChecked()
             log_to_info = dialog.output2infoArea.isChecked()
-            dialog.accept()
+            if self.dump_settings():
+                dialog.accept()
 
         # 连接信号槽
         dialog.ok.clicked.connect(lambda: save())
@@ -683,6 +704,37 @@ class DimCalculatorGUI(QMainWindow):
         dialog.reset.clicked.connect(lambda: reset())
 
         dialog.exec_()
+
+    @catch_exceptions("读取设置时崩溃")
+    def load_settings(self):
+        try:
+            with open("datas/config.json", "r", encoding="utf-8") as f:
+                config = json.load(f)
+                self.precisionMode = config.get("precisionMode", 0)
+                self.precisionSet = config.get("precisionSet", 12)
+                self.precision = config.get("precision", 1)
+        except Exception as e:
+            QMessageBox.warning(None, "警告", f"读取设置时发生意外错误：\n{e}")
+            logging.error(f"failed load settings: {e}")
+
+
+    @catch_exceptions("保存设置时崩溃")
+    def dump_settings(self) -> bool:
+        try:
+            with open("datas/config.json", "r", encoding="utf-8") as f:
+                config = json.load(f)
+            config["precision"] = self.precision
+            config["precisionMode"] = self.precisionMode
+            config["precisionSet"] = self.precisionSet
+            with open("datas/config.json", "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii=False, indent=4)
+            # raise Exception("test")
+        except Exception as e:
+            QMessageBox.warning(self, "警告", f"保存设置时发生意外错误：\n{e}")
+            logging.error(f"failed dump settings: {e}")
+            return False
+        else:
+            return True
 
     @catch_exceptions("检查首次启动时崩溃")
     def check_first_run(self):

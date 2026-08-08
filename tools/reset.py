@@ -9,8 +9,11 @@ if input("确定要恢复初始状态吗？（y/n）") == "y":
         with open("datas/config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
             config["first_run"] = True
+            config["precision"] = 1
+            config["precisionSet"] = 12
+            config["precisionMode"] = 0
         with open("datas/config.json", "w", encoding="utf-8") as f:
-            json.dump(config, f, ensure_ascii=False)
+            json.dump(config, f, ensure_ascii=False, indent=4)
     except:
         raise
     else:
