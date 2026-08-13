@@ -674,7 +674,6 @@ class DimCalculatorGUI(QMainWindow):
             dialog.precisionCombo.setCurrentIndex(0)
             precision_spin.setValue(12)
             precision_spin.setEnabled(False)
-            dialog.chooseFontSize.setValue(14)
             dialog.checkUnusualUnit.setChecked(False)
             dialog.checkUnusualFunc.setChecked(False)
             dialog.startDebug.setChecked(False)
@@ -687,7 +686,6 @@ class DimCalculatorGUI(QMainWindow):
             if self.precision != precision:
                 self.core.precision = self.precision = precision
                 self.core.update_namespace()
-            font_size = dialog.chooseFontSize.value()
             show_unusual_unit = dialog.checkUnusualUnit.isChecked()
             show_unusual_func = dialog.checkUnusualFunc.isChecked()
             debug_mode = dialog.startDebug.isChecked()
