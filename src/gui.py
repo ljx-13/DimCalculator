@@ -93,6 +93,7 @@ class DimCalculatorGUI(QMainWindow):
         for text, row, col, is_op, tip in buttons:
             btn = QPushButton(text)
             btn.setObjectName("numBtn")
+            btn.setToolTip(tip)
             if text == "单位转换":
                 btn.setCheckable(True)
             if is_op:
@@ -100,8 +101,12 @@ class DimCalculatorGUI(QMainWindow):
             if text == '=':
                 btn.setStyleSheet("background-color: #0078d7; color: white;")
             elif text == "√":  # 确保根号正常显示
-                btn.setStyleSheet('font-family: "Cambria Math", "Segoe UI Symbol", "Consolas", sans-serif; font-size: 18px')
-            btn.setToolTip(tip)
+                btn.setStyleSheet("""
+                    QPushButton {
+                        font-family: "Cambria Math", "Segoe UI Symbol", "Consolas", sans-serif; 
+                        font-size: 18px
+                    }
+                    """)
             btn.clicked.connect(self.on_button_clicked)
             left_grid.addWidget(btn, row, col)
         left_widget.setLayout(left_grid)
