@@ -34,9 +34,9 @@ class DimCalculatorGUI(QMainWindow):
         self.const_buttons = []
         self.func_buttons = []
         self.panel_cols = 3  # 右侧面板共用列数
-        self.precisionMode = 0
+        self.precisionMode = 5
         self.precisionSet = 12
-        self.precision = 1
+        self.precision = 12
         self.load_settings()
         self.core = DimCalculatorCore(precision=self.precision)
         self.initUI()
@@ -680,7 +680,7 @@ class DimCalculatorGUI(QMainWindow):
             yes = QMessageBox.information(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes, QMessageBox.No)
             if yes == QMessageBox.No:
                 return
-            dialog.precisionCombo.setCurrentIndex(0)
+            dialog.precisionCombo.setCurrentIndex(5)
             precision_spin.setValue(12)
             precision_spin.setEnabled(False)
             dialog.checkUnusualUnit.setChecked(False)
@@ -715,9 +715,9 @@ class DimCalculatorGUI(QMainWindow):
         try:
             with open("datas/config.json", "r", encoding="utf-8") as f:
                 config = json.load(f)
-                self.precisionMode = config.get("precisionMode", 0)
+                self.precisionMode = config.get("precisionMode", 5)
                 self.precisionSet = config.get("precisionSet", 12)
-                self.precision = config.get("precision", 1)
+                self.precision = config.get("precision", 12)
         except Exception as e:
             QMessageBox.warning(None, "警告", f"读取设置时发生意外错误：\n{e}")
             logging.error(f"failed load settings: {e}")
