@@ -681,6 +681,14 @@ class DimCalculatorGUI(QMainWindow):
         precision_spin.setValue(self.precisionSet)
         update_precision_state(self.precisionMode)
 
+        initial_precisionMode = self.precisionMode
+        initial_precisionSet = self.precisionSet
+        initial_unusual_unit = dialog.checkUnusualUnit.isChecked()
+        initial_unusual_func = dialog.checkUnusualFunc.isChecked()
+        initial_debug = dialog.startDebug.isChecked()
+        initial_log = dialog.output2infoArea.isChecked()
+
+        @catch_exceptions("重置设置选项时崩溃")
         def reset():
             yes = QMessageBox.information(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes, QMessageBox.No)
             if yes == QMessageBox.No:
@@ -693,6 +701,7 @@ class DimCalculatorGUI(QMainWindow):
             dialog.startDebug.setChecked(False)
             dialog.output2infoArea.setChecked(False)
 
+        @catch_exceptions("保存设置选项时崩溃")
         def save():
             self.precisionMode = precision_combo.currentIndex()
             self.precisionSet = precision_spin.value()
@@ -708,9 +717,25 @@ class DimCalculatorGUI(QMainWindow):
             if self.dump_settings():
                 dialog.accept()
 
+        def cancel():
+            has_changed = (
+                    precision_combo.currentIndex() != initial_precisionMode or
+                    precision_spin.value() != initial_precisionSet or
+                    dialog.checkUnusualUnit.isChecked() != initial_unusual_unit or
+                    dialog.checkUnusualFunc.isChecked() != initial_unusual_func or
+                    dialog.startDebug.isChecked() != initial_debug or
+                    dialog.output2infoArea.isChecked() != initial_log
+            )
+            if has_changed:
+                reply = QMessageBox.question(dialog, "确认取消", "有未保存的更改，是否保存？", QMessageBox.Yes | QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    save()
+                    return
+            dialog.reject()
+
         # 连接信号槽
         dialog.ok.clicked.connect(lambda: save())
-        dialog.cancle.clicked.connect(dialog.reject)
+        dialog.cancle.clicked.connect(lambda: cancel())
         dialog.reset.clicked.connect(lambda: reset())
 
         dialog.exec_()
