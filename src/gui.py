@@ -192,7 +192,13 @@ class DimCalculatorGUI(QMainWindow):
         self.info_text.setMaximumHeight(300)
         main_layout.addWidget(self.info_text)
 
+        # 菜单栏和状态栏
         self._create_menubar()
+
+        self.status_label = QLabel()
+        self.status_label.setStyleSheet("color: #333")
+        self.statusBar().addWidget(self.status_label)
+        self.update_status_label()
 
         self.resize(800, 750)
 
@@ -253,6 +259,9 @@ class DimCalculatorGUI(QMainWindow):
         about = QAction("关于", self)
         about.triggered.connect(self.show_about)
         help_menu.addAction(about)
+
+    def update_status_label(self):
+        self.status_label.setText(f"   常数精度: {self.precision} 位有效数字")
 
     @catch_exceptions("更新右侧面板按钮列数时崩溃")
     def update_button_layout(self):
@@ -690,6 +699,7 @@ class DimCalculatorGUI(QMainWindow):
             show_unusual_func = dialog.checkUnusualFunc.isChecked()
             debug_mode = dialog.startDebug.isChecked()
             log_to_info = dialog.output2infoArea.isChecked()
+            self.update_status_label()
             if self.dump_settings():
                 dialog.accept()
 
