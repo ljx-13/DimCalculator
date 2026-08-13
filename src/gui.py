@@ -99,6 +99,8 @@ class DimCalculatorGUI(QMainWindow):
                 btn.setObjectName("opBtn")
             if text == '=':
                 btn.setStyleSheet("background-color: #0078d7; color: white;")
+            elif text == "√":  # 确保根号正常显示
+                btn.setStyleSheet('font-family: "Cambria Math", "Segoe UI Symbol", "Consolas", sans-serif; font-size: 18px')
             btn.setToolTip(tip)
             btn.clicked.connect(self.on_button_clicked)
             left_grid.addWidget(btn, row, col)
@@ -461,7 +463,6 @@ class DimCalculatorGUI(QMainWindow):
         dialog.setFixedSize(420, 400)
         dialog.setStyleSheet("""
             QDialog { background-color: white; }
-            QLabel { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
             QLabel#link { color: #0078d7; }
             QLabel#link:hover { text-decoration: underline; }
         """)
@@ -562,7 +563,6 @@ class DimCalculatorGUI(QMainWindow):
                     border-radius: 8px;
                     padding: 20px;
                     font-size: 18px;
-                    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
                 }
                 QScrollBar:vertical {
                     background: transparent;
@@ -590,10 +590,7 @@ class DimCalculatorGUI(QMainWindow):
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
         dialog.setWindowTitle("欢迎使用 DimCalculator")
         dialog.resize(500, 380)
-        dialog.setStyleSheet("""
-            QDialog {background-color: white;}
-            QLabel {font-family: "Segoe UI", "Microsoft YaHei", sans-serif;}
-        """)
+        dialog.setStyleSheet("QDialog {background-color: white;}")
 
         layout = QVBoxLayout(dialog)
         layout.setSpacing(15)

@@ -2,6 +2,14 @@ QMainWindow {
     background-color: #f3f3f3;
 }
 
+QWidget {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+}
+
+QLineEdit#exprEdit, QLabel#resultLabel, QPushButton#numBtn, QPushButton#opBtn {
+    font-family: "Segoe UI Symbol", "Consolas", "Microsoft YaHei", sans-serif;
+}
+
 QMenuBar {
     background-color: #f3f3f3;
     border: none;
