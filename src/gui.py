@@ -54,6 +54,7 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("初始化窗口时崩溃")
     def initUI(self):  # todo: init外定义
+        self.setUpdatesEnabled(False)
         self.setWindowTitle("DimCalculator - 智能量纲计算器")
         self.setMinimumSize(800, 750)
         # self.setMaximumWidth(1250)
@@ -146,6 +147,7 @@ class DimCalculatorGUI(QMainWindow):
         self.update_status_label()
 
         self.resize(800, 750)
+        self.setUpdatesEnabled(True)
 
     @staticmethod
     def _create_buttons_from_items(items, filter_func, click_handler, cols=3):
@@ -245,7 +247,7 @@ class DimCalculatorGUI(QMainWindow):
 
         # 单位面板
         unit_widget, self.unit_layout, self.unit_buttons = self._create_buttons_from_items(
-            self.core.units, lambda item: True if self.show_unusual else item[3], handle_unit_click
+            self.core.units, lambda item: True if self.show_unusual else item[3], handle_unit_click, self.panel_cols
         )
         scroll = QScrollArea()
         scroll.setWidget(unit_widget)
@@ -255,7 +257,7 @@ class DimCalculatorGUI(QMainWindow):
 
         # 常数面板
         const_widget, self.const_layout, self.const_buttons = self._create_buttons_from_items(
-            self.core.consts, lambda item: True if self.show_unusual else item[4], handle_const_click
+            self.core.consts, lambda item: True if self.show_unusual else item[4], handle_const_click, self.panel_cols
         )
         scroll = QScrollArea()
         scroll.setWidget(const_widget)
@@ -265,7 +267,7 @@ class DimCalculatorGUI(QMainWindow):
 
         # 函数面板
         func_widget, self.func_layout, self.func_buttons = self._create_buttons_from_items(
-            func_data, lambda item: True if self.show_unusual else item[3], handle_func_click
+            func_data, lambda item: True if self.show_unusual else item[3], handle_func_click, self.panel_cols
         )
         scroll = QScrollArea()
         scroll.setWidget(func_widget)
@@ -294,12 +296,14 @@ class DimCalculatorGUI(QMainWindow):
         else:
             new_cols = 10
         # 更新所有面板
+        self.right_tabs.setUpdatesEnabled(False)
         if hasattr(self, 'unit_buttons') and self.unit_buttons:
             self._reflow_right_buttons(self.unit_layout, self.unit_buttons, new_cols)
         if hasattr(self, 'const_buttons') and self.const_buttons:
             self._reflow_right_buttons(self.const_layout, self.const_buttons, new_cols)
         if hasattr(self, 'func_buttons') and self.func_buttons:
             self._reflow_right_buttons(self.func_layout, self.func_buttons, new_cols)
+        self.right_tabs.setUpdatesEnabled(True)
         self.panel_cols = new_cols
 
     @catch_exceptions("重新排列右侧面板按钮时崩溃")
@@ -463,7 +467,7 @@ class DimCalculatorGUI(QMainWindow):
         close_btn.clicked.connect(dialog.accept)
 
         def clear_history():
-            yes = QMessageBox.information(dialog, "确认", "是否清空历史记录？", QMessageBox.Yes, QMessageBox.No)
+            yes = QMessageBox.question(dialog, "确认", "是否清空历史记录？", QMessageBox.Yes | QMessageBox.No)
             if yes == QMessageBox.No:
                 return
             self.core.history.clear()
@@ -700,7 +704,7 @@ class DimCalculatorGUI(QMainWindow):
 
         @catch_exceptions("重置设置选项时崩溃")
         def reset():
-            yes = QMessageBox.information(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes | QMessageBox.No)
+            yes = QMessageBox.question(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes | QMessageBox.No)
             if yes == QMessageBox.No:
                 return
             dialog.precisionCombo.setCurrentIndex(5)
