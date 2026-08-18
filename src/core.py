@@ -34,8 +34,8 @@ class DimCalculatorCore:
         return self.__units
 
     @property
-    def consts(self) -> List[Tuple[str, str, str, str]]:
-        """List[(英文名称, 显示名称, 符号, 值)]"""
+    def consts(self) -> List[Tuple[str, str, str, str, bool]]:
+        """List[(英文名称, 显示名称, 符号, 值, 是否常用)]"""
         return self.__consts
 
 
@@ -313,12 +313,13 @@ class DimCalculatorCore:
             with open(filename, 'r', encoding="utf-8") as f:
                 data = json.load(f)
             const_list = []
-            for unit in data.get("consts", []):
-                name = unit["name"]
-                display_name = unit.get("display_name", name)
-                symbol = unit["symbol"]
-                value = unit["value"]
-                const_list.append((name, display_name, symbol, value))
+            for const in data.get("consts", []):
+                name = const["name"]
+                display_name = const.get("display_name", name)
+                symbol = const["symbol"]
+                value = const["value"]
+                common = const["common"]
+                const_list.append((name, display_name, symbol, value, common))
             return const_list
         except FileNotFoundError:
             loger.error("FileNotFoundError: " + filename)
@@ -347,7 +348,7 @@ class DimCalculatorCore:
         }
         namespace.update(basic_units)
         # 常数
-        for name, _, _, value_str in self.consts:
+        for name, _, _, value_str, _ in self.consts:
             namespace[name] = ureg.parse_expression(self._round_quantity_str(value_str, self.precision))
         # 数学常数和函数
         def trigonometric(f, x):

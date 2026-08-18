@@ -171,12 +171,12 @@ class DimCalculatorGUI(QMainWindow):
         right_tabs.addTab(scroll, "常数")
 
         # 函数面板
-        func_data = [  # （名字，描述，符号）
-            ("sin", "正弦", "sin"), ("cos", "余弦", "cos"), ("tan", "正切", "tan"),
-            # ("csc", "余割函数(1/sin)", "csc"), ("sec", "正割函数(1/cos)", "sec"), ("cot", "余切函数(1/tan)", "cot"),
-            ("asin", "反正弦", "asin"), ("acos", "反余弦", "acos"), ("atan", "反正切", "atan"),
-            ("log", "对数 log(真数, 底数)", "log"), ("lg", "常用对数", "lg"), ("ln", "自然对数", "ln"),
-            ("abs", "绝对值", "|x|"), ("mod", " 取余 mod(被除数, 除数)", "取余"),
+        func_data = [  # （名字，描述，符号，是否常用）
+            ("sin", "正弦", "sin", True), ("cos", "余弦", "cos", True),  ("tan", "正切", "tan", True),
+            ("cot", "余切 (1/tan)", "cot", False), ("sec", "正割 (1/cos)", "sec", False), ("csc", "余割 (1/sin)", "csc", False),
+            ("asin", "反正弦 (sin⁻¹)", "asin", True), ("acos", "反余弦 (cos⁻¹)", "acos", True), ("atan", "反正切 (tan⁻¹)", "atan", True),
+            ("log", "对数 log(真数, 底数)", "log", True), ("lg", "常用对数 (lg10)", "lg", True), ("ln", "自然对数 (ln)", "ln", True),
+            ("sqrt", "根号", "√", True), ("abs", "绝对值", "|x|", True), ("mod", "取余 mod(a, b)", "取余", True),
         ]
         func_widget, self.func_layout, self.func_buttons = self._create_buttons_from_items(
             func_data, lambda item: True, handle_func_click
