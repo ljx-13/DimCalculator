@@ -44,6 +44,7 @@
         { "name": "mol", "display_name": "摩尔", "symbol": "mol", "definition": "mole", "common": true },
         { "name": "mol_L", "display_name": "摩尔每升", "symbol": "mol/L", "definition": "mol/0.001*m**3", "common": true },
         { "name": "g_per_mol", "display_name": "克每摩尔", "symbol": "g/mol", "definition": "gram/mole", "common": true },
+        { "name": "kg_per_mol", "display_name": "千克每摩尔", "symbol": "kg/mol", "definition": "kilogram/mole", "common": false },
         { "name": "cd", "display_name": "坎德拉", "symbol": "cd", "definition": "candela", "common": false },
         { "name": "N", "display_name": "牛顿", "symbol": "N", "definition": "kg*m/s**2", "common": true },
         { "name": "J", "display_name": "焦耳", "symbol": "J", "definition": "N*m", "common": true },
