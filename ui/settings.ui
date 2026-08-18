@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>480</width>
-    <height>400</height>
+    <height>350</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,7 +64,7 @@ QCheckBox {
         <x>0</x>
         <y>0</y>
         <width>480</width>
-        <height>344</height>
+        <height>294</height>
        </rect>
       </property>
       <layout class="QFormLayout" name="formLayout">
@@ -162,20 +162,13 @@ QCheckBox {
         </widget>
        </item>
        <item row="4" column="1">
-        <widget class="QCheckBox" name="checkUnusualUnit">
+        <widget class="QCheckBox" name="checkUnusual">
          <property name="text">
-          <string>显示不常用单位</string>
+          <string>显示不常用单位/常量/函数</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
-        <widget class="QCheckBox" name="checkUnusualFunc">
-         <property name="text">
-          <string>显示不常用函数</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0" colspan="2">
+       <item row="5" column="0" colspan="2">
         <widget class="QLabel" name="_debug">
          <property name="styleSheet">
           <string notr="true">font-weight: bold; color: #2c3e50; font-size: 14px;</string>
@@ -185,10 +178,17 @@ QCheckBox {
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="label_5">
          <property name="text">
           <string>日志输出</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QCheckBox" name="startDebug">
+         <property name="text">
+          <string>开启调试模式</string>
          </property>
         </widget>
        </item>
@@ -196,13 +196,6 @@ QCheckBox {
         <widget class="QCheckBox" name="output2infoArea">
          <property name="text">
           <string>输出处理日志至信息区</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="1">
-        <widget class="QCheckBox" name="startDebug">
-         <property name="text">
-          <string>开启调试模式</string>
          </property>
         </widget>
        </item>

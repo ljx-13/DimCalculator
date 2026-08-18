@@ -3,5 +3,6 @@
     "first_run": false,
     "precision": 12,
     "precisionMode": 5,
-    "precisionSet": 12
+    "precisionSet": 12,
+    "showUnusual": false
 }

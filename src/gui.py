@@ -11,6 +11,16 @@ from PyQt5.QtCore import Qt, QTimer
 
 from .core import DimCalculatorCore
 
+func_data = [  # （名字，描述，符号，是否常用）
+    ("sin", "正弦", "sin", True), ("cos", "余弦", "cos", True), ("tan", "正切", "tan", True),
+    ("cot", "余切 (1/tan)", "cot", False), ("sec", "正割 (1/cos)", "sec", False), ("csc", "余割 (1/sin)", "csc", False),
+    ("asin", "反正弦 (sin⁻¹)", "asin", True), ("acos", "反余弦 (cos⁻¹)", "acos", True),
+    ("atan", "反正切 (tan⁻¹)", "atan", True),
+    ("log", "对数 log(真数, 底数)", "log", True), ("lg", "常用对数 (lg10)", "lg", True),
+    ("ln", "自然对数 (ln)", "ln", True),
+    ("sqrt", "根号", "√", True), ("abs", "绝对值", "|x|", True), ("mod", "取余 mod(a, b)", "取余", True),
+]
+
 def catch_exceptions(msg=""):
     """捕获函数中的异常，弹出错误窗口并记录日志"""
     def decorator(func):
@@ -37,10 +47,10 @@ class DimCalculatorGUI(QMainWindow):
         self.precisionMode = 5
         self.precisionSet = 12
         self.precision = 12
+        self.show_unusual = False
         self.load_settings()
         self.core = DimCalculatorCore(precision=self.precision)
         self.initUI()
-        QTimer.singleShot(100, self.update_button_layout)
 
     @catch_exceptions("初始化窗口时崩溃")
     def initUI(self):  # todo: init外定义
@@ -114,81 +124,11 @@ class DimCalculatorGUI(QMainWindow):
         left_widget.setMaximumHeight(800)
 
         # 右侧面板（单位、常数、函数）
-        right_tabs = QTabWidget()
-        right_tabs.setTabPosition(QTabWidget.North)
-
-        @catch_exceptions("处理单位输入时崩溃")
-        def handle_unit_click(symbol, name=None):
-            if self.is_convert_mode:
-                # 处于转换模式：执行单位转换
-                if self.is_convert_mode:
-                    converted_result, error = self.core.convert_unit(symbol)
-                    if error:
-                        self.result_label.setText("转换错误")
-                        self.info_text.setText(error)
-                    else:
-                        self.result_label.setText(converted_result)
-                        # 退出转换模式，恢复按钮状态
-                        self.is_convert_mode = False
-                        # 找到“单位转换”按钮并弹起
-                        for btn in self.findChildren(QPushButton):
-                            if btn.text() == "单位转换":
-                                btn.setChecked(False)
-                                break
-            else:
-                # 非转换模式：正常插入单位符号
-                self.expr_edit.insert(symbol)
-
-        @catch_exceptions("处理常数输入时崩溃")
-        def handle_const_click(symbol, name):
-            if name.startswith("_"):
-                self.expr_edit.insert("_" + symbol)
-            else:
-                self.expr_edit.insert(symbol)
-
-        @catch_exceptions("处理函数输入时崩溃")
-        def handle_func_click(symbol, name):
-            self.expr_edit.insert(name + "(")
-
-        # 单位面板
-        unit_widget, self.unit_layout, self.unit_buttons = self._create_buttons_from_items(
-            self.core.units, lambda item: item[3], handle_unit_click
-        )
-        scroll = QScrollArea()
-        scroll.setWidget(unit_widget)
-        scroll.setWidgetResizable(True)
-        scroll.setMinimumWidth(250)
-        right_tabs.addTab(scroll, "单位")
-
-        # 常数面板
-        const_widget, self.const_layout, self.const_buttons = self._create_buttons_from_items(
-            self.core.consts, lambda item: True, handle_const_click
-        )
-        scroll = QScrollArea()
-        scroll.setWidget(const_widget)
-        scroll.setWidgetResizable(True)
-        scroll.setMinimumWidth(250)
-        right_tabs.addTab(scroll, "常数")
-
-        # 函数面板
-        func_data = [  # （名字，描述，符号，是否常用）
-            ("sin", "正弦", "sin", True), ("cos", "余弦", "cos", True),  ("tan", "正切", "tan", True),
-            ("cot", "余切 (1/tan)", "cot", False), ("sec", "正割 (1/cos)", "sec", False), ("csc", "余割 (1/sin)", "csc", False),
-            ("asin", "反正弦 (sin⁻¹)", "asin", True), ("acos", "反余弦 (cos⁻¹)", "acos", True), ("atan", "反正切 (tan⁻¹)", "atan", True),
-            ("log", "对数 log(真数, 底数)", "log", True), ("lg", "常用对数 (lg10)", "lg", True), ("ln", "自然对数 (ln)", "ln", True),
-            ("sqrt", "根号", "√", True), ("abs", "绝对值", "|x|", True), ("mod", "取余 mod(a, b)", "取余", True),
-        ]
-        func_widget, self.func_layout, self.func_buttons = self._create_buttons_from_items(
-            func_data, lambda item: True, handle_func_click
-        )
-        scroll = QScrollArea()
-        scroll.setWidget(func_widget)
-        scroll.setWidgetResizable(True)
-        scroll.setMinimumWidth(250)
-        right_tabs.addTab(scroll, "函数")
-
+        self.right_tabs = QTabWidget()
+        self.right_tabs.setTabPosition(QTabWidget.North)
+        self.update_right_buttons()
         content_layout.addWidget(left_widget, 3)
-        content_layout.addWidget(right_tabs, 2)
+        content_layout.addWidget(self.right_tabs, 2)
         main_layout.addLayout(content_layout)
 
         # 诊断/步骤信息区
@@ -207,8 +147,8 @@ class DimCalculatorGUI(QMainWindow):
 
         self.resize(800, 750)
 
-    @catch_exceptions("创建按钮面板时崩溃")
-    def _create_buttons_from_items(self, items, filter_func, click_handler, cols=3):
+    @staticmethod
+    def _create_buttons_from_items(items, filter_func, click_handler, cols=3):
         """
         从数据列表生成按钮面板
         :param items: 数据列表（名字，描述，符号）
@@ -265,11 +205,81 @@ class DimCalculatorGUI(QMainWindow):
         about.triggered.connect(self.show_about)
         help_menu.addAction(about)
 
+    @catch_exceptions("更新右侧面板按钮时崩溃")
+    def update_right_buttons(self):
+        """重新放置右侧按钮"""
+        self.right_tabs.clear()
+
+        @catch_exceptions("处理单位输入时崩溃")
+        def handle_unit_click(symbol, name=None):
+            if self.is_convert_mode:
+                # 处于转换模式：执行单位转换
+                if self.is_convert_mode:
+                    converted_result, error = self.core.convert_unit(symbol)
+                    if error:
+                        self.result_label.setText("转换错误")
+                        self.info_text.setText(error)
+                    else:
+                        self.result_label.setText(converted_result)
+                        # 退出转换模式，恢复按钮状态
+                        self.is_convert_mode = False
+                        # 找到“单位转换”按钮并弹起
+                        for b in self.findChildren(QPushButton):
+                            if b.text() == "单位转换":
+                                b.setChecked(False)
+                                break
+            else:
+                # 非转换模式：正常插入单位符号
+                self.expr_edit.insert(symbol)
+
+        @catch_exceptions("处理常数输入时崩溃")
+        def handle_const_click(symbol, name):
+            if name.startswith("_"):
+                self.expr_edit.insert("_" + symbol)
+            else:
+                self.expr_edit.insert(symbol)
+
+        @catch_exceptions("处理函数输入时崩溃")
+        def handle_func_click(symbol, name):
+            self.expr_edit.insert(name + "(")
+
+        # 单位面板
+        unit_widget, self.unit_layout, self.unit_buttons = self._create_buttons_from_items(
+            self.core.units, lambda item: True if self.show_unusual else item[3], handle_unit_click
+        )
+        scroll = QScrollArea()
+        scroll.setWidget(unit_widget)
+        scroll.setWidgetResizable(True)
+        scroll.setMinimumWidth(250)
+        self.right_tabs.addTab(scroll, "单位")
+
+        # 常数面板
+        const_widget, self.const_layout, self.const_buttons = self._create_buttons_from_items(
+            self.core.consts, lambda item: True if self.show_unusual else item[4], handle_const_click
+        )
+        scroll = QScrollArea()
+        scroll.setWidget(const_widget)
+        scroll.setWidgetResizable(True)
+        scroll.setMinimumWidth(250)
+        self.right_tabs.addTab(scroll, "常数")
+
+        # 函数面板
+        func_widget, self.func_layout, self.func_buttons = self._create_buttons_from_items(
+            func_data, lambda item: True if self.show_unusual else item[3], handle_func_click
+        )
+        scroll = QScrollArea()
+        scroll.setWidget(func_widget)
+        scroll.setWidgetResizable(True)
+        scroll.setMinimumWidth(250)
+        self.right_tabs.addTab(scroll, "函数")
+
+        self.update_rbutton_layout()
+
     def update_status_label(self):
         self.status_label.setText(f"   常数精度: {self.precision} 位有效数字")
 
     @catch_exceptions("更新右侧面板按钮列数时崩溃")
-    def update_button_layout(self):
+    def update_rbutton_layout(self):
         """根据窗口宽度动态更新按钮列数"""
         tab_widget = self.findChild(QTabWidget)
         if not tab_widget:
@@ -285,15 +295,15 @@ class DimCalculatorGUI(QMainWindow):
             new_cols = 10
         # 更新所有面板
         if hasattr(self, 'unit_buttons') and self.unit_buttons:
-            self._reflow_buttons(self.unit_layout, self.unit_buttons, new_cols)
+            self._reflow_right_buttons(self.unit_layout, self.unit_buttons, new_cols)
         if hasattr(self, 'const_buttons') and self.const_buttons:
-            self._reflow_buttons(self.const_layout, self.const_buttons, new_cols)
+            self._reflow_right_buttons(self.const_layout, self.const_buttons, new_cols)
         if hasattr(self, 'func_buttons') and self.func_buttons:
-            self._reflow_buttons(self.func_layout, self.func_buttons, new_cols)
+            self._reflow_right_buttons(self.func_layout, self.func_buttons, new_cols)
         self.panel_cols = new_cols
 
     @catch_exceptions("重新排列右侧面板按钮时崩溃")
-    def _reflow_buttons(self, layout, buttons, cols):
+    def _reflow_right_buttons(self, layout, buttons, cols):
         """重新排列按钮到指定列数，并调整按钮大小保持圆形"""
         # 清空布局
         while layout.count():
@@ -680,49 +690,57 @@ class DimCalculatorGUI(QMainWindow):
         precision_combo.setCurrentIndex(self.precisionMode)
         precision_spin.setValue(self.precisionSet)
         update_precision_state(self.precisionMode)
+        dialog.checkUnusual.setChecked(self.show_unusual)
 
         initial_precisionMode = self.precisionMode
         initial_precisionSet = self.precisionSet
-        initial_unusual_unit = dialog.checkUnusualUnit.isChecked()
-        initial_unusual_func = dialog.checkUnusualFunc.isChecked()
+        initial_unusual = dialog.checkUnusual.isChecked()
         initial_debug = dialog.startDebug.isChecked()
         initial_log = dialog.output2infoArea.isChecked()
 
         @catch_exceptions("重置设置选项时崩溃")
         def reset():
-            yes = QMessageBox.information(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes, QMessageBox.No)
+            yes = QMessageBox.information(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes | QMessageBox.No)
             if yes == QMessageBox.No:
                 return
             dialog.precisionCombo.setCurrentIndex(5)
             precision_spin.setValue(12)
             precision_spin.setEnabled(False)
-            dialog.checkUnusualUnit.setChecked(False)
-            dialog.checkUnusualFunc.setChecked(False)
+            dialog.checkUnusual.setChecked(False)
             dialog.startDebug.setChecked(False)
             dialog.output2infoArea.setChecked(False)
 
         @catch_exceptions("保存设置选项时崩溃")
         def save():
-            self.precisionMode = precision_combo.currentIndex()
-            self.precisionSet = precision_spin.value()
-            precision = self.precisionSet if self.precisionMode == 5 else [1, 2, 4, 6, 12][self.precisionMode]
-            if self.precision != precision:
-                self.core.precision = self.precision = precision
-                self.core.update_namespace()
-            show_unusual_unit = dialog.checkUnusualUnit.isChecked()
-            show_unusual_func = dialog.checkUnusualFunc.isChecked()
-            debug_mode = dialog.startDebug.isChecked()
-            log_to_info = dialog.output2infoArea.isChecked()
-            self.update_status_label()
-            if self.dump_settings():
-                dialog.accept()
+            has_changed = (
+                    precision_combo.currentIndex() != initial_precisionMode or
+                    precision_spin.value() != initial_precisionSet or
+                    dialog.checkUnusual.isChecked() != initial_unusual or
+                    dialog.startDebug.isChecked() != initial_debug or
+                    dialog.output2infoArea.isChecked() != initial_log
+            )
+            if has_changed:
+                self.precisionMode = precision_combo.currentIndex()
+                self.precisionSet = precision_spin.value()
+                precision = self.precisionSet if self.precisionMode == 5 else [1, 2, 4, 6, 12][self.precisionMode]
+                if self.precision != precision:
+                    self.core.precision = self.precision = precision
+                    self.core.update_namespace()
+                show_unusual = dialog.checkUnusual.isChecked()
+                if self.show_unusual != show_unusual:
+                    self.show_unusual = show_unusual
+                    self.update_right_buttons()
+                debug_mode = dialog.startDebug.isChecked()
+                log_to_info = dialog.output2infoArea.isChecked()
+                self.update_status_label()
+                if self.dump_settings():
+                    dialog.accept()
 
         def cancel():
             has_changed = (
                     precision_combo.currentIndex() != initial_precisionMode or
                     precision_spin.value() != initial_precisionSet or
-                    dialog.checkUnusualUnit.isChecked() != initial_unusual_unit or
-                    dialog.checkUnusualFunc.isChecked() != initial_unusual_func or
+                    dialog.checkUnusual.isChecked() != initial_unusual or
                     dialog.startDebug.isChecked() != initial_debug or
                     dialog.output2infoArea.isChecked() != initial_log
             )
@@ -733,7 +751,6 @@ class DimCalculatorGUI(QMainWindow):
                     return
             dialog.reject()
 
-        # 连接信号槽
         dialog.ok.clicked.connect(lambda: save())
         dialog.cancle.clicked.connect(lambda: cancel())
         dialog.reset.clicked.connect(lambda: reset())
@@ -743,11 +760,12 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("读取设置时崩溃")
     def load_settings(self):
         try:
-            with open("datas/config.json", "r", encoding="utf-8") as f:
+            with open("datas/config.json", "r", encoding="utf-8") as f:  # fixme
                 config = json.load(f)
                 self.precisionMode = config.get("precisionMode", 5)
                 self.precisionSet = config.get("precisionSet", 12)
                 self.precision = config.get("precision", 12)
+                self.show_unusual = config.get("showUnusual", False)
         except Exception as e:
             QMessageBox.warning(None, "警告", f"读取设置时发生意外错误：\n{e}")
             logging.error(f"failed load settings: {e}")
@@ -761,6 +779,7 @@ class DimCalculatorGUI(QMainWindow):
             config["precision"] = self.precision
             config["precisionMode"] = self.precisionMode
             config["precisionSet"] = self.precisionSet
+            config["showUnusual"] = self.show_unusual
             with open("datas/config.json", "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=4)
             # raise Exception("test")
@@ -791,7 +810,7 @@ class DimCalculatorGUI(QMainWindow):
         """窗口尺寸变化时触发"""
         super().resizeEvent(event)
         # 延迟执行，确保布局已完成调整
-        QTimer.singleShot(10, self.update_button_layout)
+        QTimer.singleShot(10, self.update_rbutton_layout)
 
     def closeEvent(self, event):
         event.accept()
