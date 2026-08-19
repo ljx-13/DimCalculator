@@ -56,7 +56,6 @@ class DimCalculatorCore:
             lambda m: '^' + ''.join(map_[c_] for c_ in m.group()),
             exper
         )
-        exper = exper.replace("*10^", "e")
 
         # 替换单位符号和常量
         for (name, dn, symbol, c) in self.units:
