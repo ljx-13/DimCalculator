@@ -36,6 +36,11 @@ def confirm(prompt, exit_=False):
 def run_cmd(cmd):
     return subprocess.run(cmd, shell=True)
 
+def test():
+    from test import run_all_tests
+    run_all_tests()
+    print("\n测试通过\n\n")
+
 @confirm("[1/4] 确认版本号", exit_=True)
 def step_version(version):
     if not version:
@@ -83,6 +88,7 @@ def step_push():
 
 
 def main():
+    test()
     with open("datas/config.json", "r", encoding="utf-8") as f:
         version =  json.load(f).get("version", "").strip()
     print(version)
