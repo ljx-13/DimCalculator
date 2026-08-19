@@ -578,19 +578,16 @@ class DimCalculatorCore:
             return result
         return str(value)
 
-    def _to_preferred(self, result: "pint.Quantity") -> pint.Quantity | int| float:
-        """将Quantity的单位转换到通用单位"""
+    def _to_preferred(self, result: "pint.Quantity") -> pint.Quantity | int | float:
+        """将Quantity的单位转换到通用单位"""  # todo: 转至标准单位，转至基本单位
         if isinstance(result, pint.Quantity):
             # 如果是无量纲，直接返回数值
             loger.debug(f"original dimensionality: {result.dimensionality}")
             if result.dimensionless:
                 if not result.units in ("rad", "r", "deg", "degree"):
                     return result.to_base_units().magnitude
-            unit = str(result.units)
-            if "liter" in unit:
-                if result.magnitude >= 1000:
-                    result = result.to('liter')
-                return result
+                # else:
+                #     return result
             try:
                 result = result.to_preferred()
             except Exception as e:
@@ -598,20 +595,114 @@ class DimCalculatorCore:
             else:
                 loger.debug(f"auto to_preferred(): {result}")
             finally:
-                if set(result.dimensionality.keys()) == {'[time]'}:
-                    if result.dimensionality['[time]'] == -1:
-                        if  "rev" not in str(result.units):
-                            result = result.to("Hz")
-                    elif result.dimensionality['[time]'] == 1:
-                        if result.units not in ("ms", "min", "d"):
-                            result = result.to_base_units()
-                            mag = abs(result.magnitude)
-                            if mag >= 24 * 3600 and mag % 27 == 0:
-                                result = result.to("day")
-                            elif mag >= 3600 and mag % 9 == 0:
-                                result = result.to('h')
-                            elif mag <= 0.01:
-                                result = result.to('ms')
+                def get_result_and_mag(obj):
+                    result_ = result.to(obj)
+                    return result_, abs(result_.magnitude)
+                for u in self.preferred_units:
+                    if result.check(u):
+                        loger.warning("nonauto to_preferred(): " + u)
+                        result = result.to(u)
+                if result.check("Hz"):
+                    if "r" not in str(result.units):
+                        result = result.to("Hz")
+                    else:
+                        result, mag = get_result_and_mag("r/s")
+                        if mag < 1:
+                            result = result.to('r/min')
+                elif result.check("s"):
+                    if result.units not in ("millisecond", "minute", "day"):
+                        result, mag = get_result_and_mag("s")
+                        if mag >= 24 * 3600 and mag % 27 == 0:
+                            result = result.to("day")
+                        elif mag >= 3600 and mag % 9 == 0:
+                            result = result.to('h')
+                        elif 1e-6 <= mag < 0.1:
+                            result = result.to('ms')
+                elif result.check("kg"):
+                    if result.units not in ("u","unified_atomic_mass_unit"):
+                        result, mag = get_result_and_mag("kg")
+                        if mag >= 1000:
+                            result = result.to('t')
+                        elif 1e-3 <= mag < 0.1:
+                            result = result.to('g')
+                        elif 1e-6 <= mag < 1e-3:
+                            result = result.to('mg')
+                        # elif 1e-30 <= mag < 1e-20:
+                        #     result = result.to('u')
+                elif result.check("m"):
+                    if result.units not in ("mile", "ft", "ly"):
+                        result, mag = get_result_and_mag("m")
+                        if mag >= 9.4607304725808e15:
+                            result = result.to('ly')
+                        elif mag >= 1000:
+                            result = result.to('km')
+                        elif 1e-2 <= mag < 0.1:
+                            result = result.to('cm')
+                        elif 1e-3 <= mag < 1e-2:
+                            result = result.to('mm')
+                        elif 1e-6 <= mag < 1e-3:
+                            result = result.to('um')
+                        elif 1e-9 <= mag < 1e-6:
+                            result = result.to('nm')
+                elif result.check("m**2"):
+                    result, mag = get_result_and_mag("m**2")
+                    if mag >= 1e6:
+                        result = result.to('km**2')
+                    elif 1e-4 <= mag < 1e-2:
+                        result = result.to('cm**2')
+                    elif 1e-6 <= mag < 1e-4:
+                        result = result.to('mm**2')
+                elif result.check("m**3"):
+                    if "liter" in str(result.units):
+                        result, mag = get_result_and_mag("L")
+                        if 1e-6 <= mag < 1:
+                            result = result.to('mL')
+                        elif mag < 1e-6:
+                            result = result.to("m**3")
+                    else:
+                        result, mag = get_result_and_mag("m**3")
+                        if mag >= 1e9:
+                            result = result.to('km**3')
+                        elif 1e-6 <= mag < 1e-3:
+                            result = result.to('cm**3')
+                        elif 1e-9 <= mag < 1e-6:
+                            result = result.to('mm**3')
+                elif result.check("m/s"):
+                    if "k" not in str(result.units):
+                        result = result.to("m/s")
+                elif result.check("Pa"):
+                    result, mag = get_result_and_mag("Pa")
+                    if mag >= 101325:
+                        result = result.to('atm')
+                    elif mag >= 1000:
+                        result = result.to('kPa')
+                elif result.check("A"):
+                    result, mag = get_result_and_mag("A")
+                    if mag < 0.1:
+                        result = result.to('mA')
+                elif result.check("V"):
+                    result, mag = get_result_and_mag("V")
+                    if mag < 0.1:
+                        result = result.to('mV')
+                elif result.check("W"):
+                    result, mag = get_result_and_mag("W")
+                    if mag >= 1000:
+                        result = result.to('kW')
+                elif result.check("g/cm**3"):
+                    result, mag = get_result_and_mag("g/cm**3")
+                    if mag <= 0.001:
+                        result = result.to('kg/m**3')
+                elif result.check("g/mol"):
+                    result, mag = get_result_and_mag("g/mol")
+                    if mag >= 1000:
+                        result = result.to('kg/mol')
+                elif result.check("J"):
+                    if result.units not in ("eV", "cal", "kWh"):
+                        result, mag = get_result_and_mag("J")
+                        if mag >= 3.6e6:
+                            result = result.to('kWh')
+                        elif mag <= 1e-15:
+                            result = result.to('eV')
                 # if "e" not in str(result.magnitude) and "." in str(result.magnitude):
                 #     if "." in str(origin.magnitude):
                 #         if len(str(result.magnitude).split('.')[1]) > 10 > len(str(origin.magnitude).split('.')[1]):
@@ -619,10 +710,6 @@ class DimCalculatorCore:
                 #             result = origin
                 #     else:
                 #         result = origin
-                for u in self.preferred_units:
-                    if result.check(u):
-                        loger.warning("nonauto to_preferred(): " + u)
-                        result = result.to(u)
                 return result
         else:
             raise TypeError

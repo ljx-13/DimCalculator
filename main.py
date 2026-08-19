@@ -102,7 +102,7 @@ if __name__ == '__main__':
                 stats.print_stats(20)
         sys.exit(app.exec_())
     except Exception as e:
-        logging.critical(''.join(traceback.format_exception(type(e), e, e.__traceback__)))
+        logging.critical(''.join(traceback.format_exception(type(e), e, e.__traceback__)))  # todo: format __traceback__
         try:
             # 检查是否已有 QApplication 实例
             app = QApplication.instance()

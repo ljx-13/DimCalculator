@@ -49,7 +49,7 @@ def run_all_tests():
     # ========== 2. 长度单位 ==========
     print("\n长度单位:")
     test("5m + 20cm", "5.2m")
-    test("1km + 500m", "1500m")
+    test("1km + 500m", "1.5km")
     test("100cm", "1m")
     test("1000mm", "1m")
     test("1km / 2", "500m")
@@ -165,6 +165,95 @@ def run_all_tests():
     # test("1e3", "1000")
     # test("1e-3", "001")
     # test("1e3m", "1000m")
+
+    # ========== 单位化简（自动转换） ==========
+    print("\n单位化简（数值大小自动转换）:")
+
+    # 长度
+    test("1500m", "1.5km")
+    test("0.05m", "5cm")
+    test("0.005m", "5mm")
+    test("0.0005m", "500µm")
+    test("0.00005m", "50µm")
+    test("5*10^-8m", "50nm")
+    test("500m", "500m")
+    test("1km", "1km")
+    test("1mile", "1mi")  # todo: mile
+
+    # 质量
+    test("1500kg", "1.5t")
+    test("0.05kg", "50g")
+    test("0.005kg", "5g")
+    test("5*10^-6kg", "5mg")
+    test("0.5kg", "0.5kg")
+    test("1u", "1u")
+
+    # 时间
+    test("7200s", "2h")
+    test("3660s", "3660s")
+    test("86400s", "1d")
+    test("180s", "180s")
+    test("60s", "60s")
+    test("2min", "2min")
+    test("0.05s", "50ms")
+
+    # 面积
+    test("2*10^6m2", "2km²")
+    test("2*10^5m2", "200000m²")
+    test("0.0005m2", "5cm²")
+
+    # 体积
+    test("2*10^9m3", "2km³")
+    test("500mL", "500ml")
+
+    # 速度
+    test("5m/s", "5m/s")
+    test("36km/h", "36km/h")
+
+    # 转速
+    test("5r/s", "5r/s")
+    test("0.05r/s", "3r/min")
+    test("0.01r/s", "0.6r/min")
+
+    # 压强
+    test("500Pa", "500Pa")
+    test("1000Pa", "1kPa")
+    test("101325Pa", "1atm")
+    test("202650Pa", "2atm")
+    test("50kPa", "50kPa")
+    test("1atm", "1atm")
+
+    # 电流
+    test("0.5A", "0.5A")
+    test("0.05A", "50mA")
+    test("0.005A", "5mA")
+
+    # 电压
+    test("0.5V", "0.5V")
+    test("0.05V", "50mV")
+    test("0.005V", "5mV")
+
+    # 功率
+    test("500W", "500W")
+    test("1000W", "1kW")
+    test("1500W", "1.5kW")
+
+    # 密度
+    # test("1g/cm3", "1g/cm³") fixme
+    # test("0.0005g/cm3", "0.5kg/m³")
+    # test("0.001g/cm3", "1kg/m³")
+
+    # 摩尔质量
+    test("500g/mol", "500g/mol")
+    test("1000g/mol", "1kg/mol")
+    test("1500g/mol", "1.5kg/mol")
+
+    # 能量
+    test("500J", "500J")
+    test("3600000J", "1kWh")
+    test("5400000J", "1.5kWh")
+    test("1*10^-16J", "624.150907446eV")
+    test("1*10^-18J", "6.24150907446eV")
 
     # ========== 17. 错误诊断 ==========
     print("\n错误诊断:")

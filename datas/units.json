@@ -2,6 +2,7 @@
     "units": [
         { "name": "m", "display_name": "米", "symbol": "m", "definition": "meter", "common": true },
         { "name": "km", "display_name": "千米", "symbol": "km", "definition": "1000*meter", "common": true },
+        { "name": "dm", "display_name": "分米", "symbol": "dm", "definition": "0.1*meter", "common": false },
         { "name": "cm", "display_name": "厘米", "symbol": "cm", "definition": "0.01*meter", "common": true },
         { "name": "mm", "display_name": "毫米", "symbol": "mm", "definition": "0.001*meter", "common": true },
         { "name": "um", "display_name": "微米", "symbol": "µm", "definition": "1e-6*meter", "common": false },
@@ -77,6 +78,6 @@
         { "name": "rps", "display_name": "转每秒", "symbol": "r/s", "definition": "rev/second", "common": false }
     ],
     "preferred_units": [
-        "N", "J", "W", "Pa", "V", "A", "ohm", "Ω", "m²", "m³", "kg", "C", "F", "H", "T", "Wb", "m/s", "m/s²"
+        "N", "J", "W", "Pa", "V", "A", "ohm", "C", "F", "H", "T", "Wb", "m/s²"
     ]
 }
