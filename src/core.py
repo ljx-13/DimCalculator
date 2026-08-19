@@ -62,7 +62,7 @@ class DimCalculatorCore:
         for (name, dn, symbol, c) in self.units:
             if '/' not in symbol:
                 exper = self._replace_if_surrounded_by_math(exper, symbol, name)
-        for (name, dn, symbol, v) in self.consts:
+        for (name, dn, symbol, v, c) in self.consts:
             if name.startswith("_"):  # 物理常量
                 exper = self._replace_if_surrounded_by_math(exper, "_" + symbol, name)
             else:  # 数学常量
