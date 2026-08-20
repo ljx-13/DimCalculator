@@ -715,29 +715,21 @@ class DimCalculatorGUI(QMainWindow):
 
         @catch_exceptions("保存设置选项时崩溃")
         def save():
-            has_changed = (
-                    precision_combo.currentIndex() != initial_precisionMode or
-                    precision_spin.value() != initial_precisionSet or
-                    dialog.checkUnusual.isChecked() != initial_unusual or
-                    dialog.startDebug.isChecked() != initial_debug or
-                    dialog.output2infoArea.isChecked() != initial_log
-            )
-            if has_changed:
-                self.precisionMode = precision_combo.currentIndex()
-                self.precisionSet = precision_spin.value()
-                precision = self.precisionSet if self.precisionMode == 5 else [1, 2, 4, 6, 12][self.precisionMode]
-                if self.precision != precision:
-                    self.core.precision = self.precision = precision
-                    self.core.update_namespace()
-                show_unusual = dialog.checkUnusual.isChecked()
-                if self.show_unusual != show_unusual:
-                    self.show_unusual = show_unusual
-                    self.update_right_buttons()
-                debug_mode = dialog.startDebug.isChecked()
-                log_to_info = dialog.output2infoArea.isChecked()
-                self.update_status_label()
-                if self.dump_settings():
-                    dialog.accept()
+            self.precisionMode = precision_combo.currentIndex()
+            self.precisionSet = precision_spin.value()
+            precision = self.precisionSet if self.precisionMode == 5 else [1, 2, 4, 6, 12][self.precisionMode]
+            if self.precision != precision:
+                self.core.precision = self.precision = precision
+                self.core.update_namespace()
+            show_unusual = dialog.checkUnusual.isChecked()
+            if self.show_unusual != show_unusual:
+                self.show_unusual = show_unusual
+                self.update_right_buttons()
+            debug = dialog.startDebug.isChecked()
+            log_to_info = dialog.output2infoArea.isChecked()
+            self.update_status_label()
+            if self.dump_settings():
+                dialog.accept()
 
         def cancel():
             has_changed = (
