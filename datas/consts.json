@@ -4,12 +4,12 @@
         { "name": "e", "display_name": "自然常数", "symbol": "e", "value": "2.718281828459045", "common": true },
         { "name": "_g", "display_name": "重力加速度", "symbol": "g", "value": "9.80665*m/s**2", "common": true },
         { "name": "_c", "display_name": "光速", "symbol": "c", "value": "299792458*m/s", "common": true },
+        { "name": "_R", "display_name": "理想气体常数", "symbol": "R", "value": "8.314462618*J/mol/K", "common": false },
         { "name": "_G", "display_name": "万有引力常数", "symbol": "G", "value": "6.67430e-11*m**3/kg/s**2", "common": true },
         { "name": "_k_e", "display_name": "库仑常量", "symbol": "ke", "value": "8.9875517923e9*N*m**2/C**2", "common": true },
         { "name": "_e_charge", "display_name": "元电荷", "symbol": "e", "value": "1.60217662e-19*C", "common": true },
         { "name": "_N_A", "display_name": "阿伏伽德罗常数", "symbol": "N_A", "value": "6.02214076e23/mol", "common": true },
-        { "name": "_V_m", "display_name": "气体摩尔体积(标况)", "symbol": "Vₘ", "value": "0.022414*m**3/mol", "common": true },
-        { "name": "_R", "display_name": "理想气体常数", "symbol": "R", "value": "8.314462618*J/mol/K", "common": false },
+        { "name": "_V_m", "display_name": "气体摩尔体积(标况)", "symbol": "Vₘ", "value": "22.414*L/mol", "common": true },
         { "name": "_h", "display_name": "普朗克常数", "symbol": "h", "value": "6.62607015e-34*J*s", "common": false },
         { "name": "_m_e", "display_name": "电子质量", "symbol": "mₑ", "value": "9.1093837e-31*kg", "common": false },
         { "name": "_m_p", "display_name": "质子质量", "symbol": "mₚ", "value": "1.6726219e-27*kg", "common": false },
@@ -17,6 +17,7 @@
         { "name": "_epsilon_0", "display_name": "真空介电常数", "symbol": "ε₀", "value": "8.8541878128e-12*F/m", "common": false },
         { "name": "_mu_0", "display_name": "真空磁导率", "symbol": "μ₀", "value": "1.25663706212e-6*N/A**2", "common": false },
         { "name": "_k_B", "display_name": "玻尔兹曼常数", "symbol": "k", "value": "1.380649e-23*J/K", "common": false },
-        { "name": "_F", "display_name": "法拉第常数", "symbol": "F", "value": "96485.33212*C/mol", "common": false }
+        { "name": "_F", "display_name": "法拉第常数", "symbol": "F", "value": "96485.33212*C/mol", "common": false },
+        { "name": "_sigma", "display_name": "斯特藩-玻尔兹曼常数", "symbol": "σ", "value": "5.670374419e-8*W/m**2/K**4", "common": false }
     ]
 }
