@@ -404,6 +404,10 @@ class DimCalculatorCore:
         namespace['lg'] = lambda x: log(x, 10)
         namespace['ln'] = lambda x: log(x, math.e)
         namespace['mod'] = lambda a, b: a % b
+        namespace['factorial'] = math.factorial
+        namespace['sinh'] = math.sinh
+        namespace['cosh'] = math.cosh
+        namespace['tanh'] = math.tanh
         return namespace
 
     def update_namespace(self):
