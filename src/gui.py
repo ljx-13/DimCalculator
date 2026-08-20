@@ -141,9 +141,16 @@ class DimCalculatorGUI(QMainWindow):
         # 菜单栏和状态栏
         self._create_menubar()
 
-        self.status_label = QLabel()
-        self.status_label.setStyleSheet("color: #333")
-        self.statusBar().addWidget(self.status_label)
+        self.precision_label = QLabel()
+        self.precision_label.setStyleSheet("color: #333")
+        self.statusBar().addWidget(self.precision_label)
+
+        self.debug_label = QLabel()
+        self.debug_label.setText("调试模式已打开")
+        self.debug_label.setStyleSheet("color: #333;")
+        self.debug_label.setVisible(False)  # 默认隐藏
+        self.statusBar().addPermanentWidget(self.debug_label)  # 右对齐
+
         self.update_status_label()
 
         self.resize(800, 750)
@@ -278,7 +285,8 @@ class DimCalculatorGUI(QMainWindow):
         self.update_rbutton_layout()
 
     def update_status_label(self):
-        self.status_label.setText(f"   常数精度: {self.precision} 位有效数字")
+        self.precision_label.setText(f"   常数精度: {self.precision} 位有效数字")
+        self.debug_label.setVisible(self.debug)
 
     @catch_exceptions("更新右侧面板按钮列数时崩溃")
     def update_rbutton_layout(self):
@@ -727,11 +735,13 @@ class DimCalculatorGUI(QMainWindow):
                 self.show_unusual = show_unusual
                 self.update_right_buttons()
             debug = dialog.startDebug.isChecked()
-            self.debug = debug
-            if debug:
-                logging.getLogger().setLevel(logging.DEBUG)
-            else:
-                logging.getLogger().setLevel(logging.ERROR)
+            if self.debug != debug:
+                self.debug = debug
+                if debug:
+                    logging.getLogger().setLevel(logging.DEBUG)
+                    QMessageBox.information(dialog, "调试模式", "调试模式已开启\n日志将输出到 log/DimCalculator.log")
+                else:
+                    logging.getLogger().setLevel(logging.ERROR)
             log_to_info = dialog.output2infoArea.isChecked()
             self.update_status_label()
             if self.dump_settings():
