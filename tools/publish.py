@@ -1,7 +1,6 @@
 """更新版本，打包发布（自用）"""
 
 import os
-import sys
 import json
 import subprocess
 import shutil
@@ -40,6 +39,11 @@ def test():
     from test import run_all_tests
     run_all_tests()
     print("\n测试通过\n\n")
+
+def reset():
+    from reset import reset
+    reset()
+    print("已恢复出厂设置")
 
 @confirm("[1/4] 确认版本号", exit_=True)
 def step_version(version):
@@ -89,6 +93,7 @@ def step_push():
 
 def main():
     test()
+    reset()
     with open("datas/config.json", "r", encoding="utf-8") as f:
         version =  json.load(f).get("version", "").strip()
     print(version)
