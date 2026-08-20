@@ -47,6 +47,7 @@ class DimCalculatorGUI(QMainWindow):
         self.precisionSet = 12
         self.precision = 12
         self.show_unusual = False
+        self.debug = False
         self.load_settings()
         self.core = DimCalculatorCore(precision=self.precision)
         self.initUI()
@@ -685,7 +686,6 @@ class DimCalculatorGUI(QMainWindow):
         loadUi("ui/settings.ui", dialog)
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
         # 初始化
-        # 精度设置
         precision_combo = dialog.precisionCombo
         precision_spin = dialog.precisionSet
         update_precision_state = lambda index: precision_spin.setEnabled(index == 5)  # 自定义项索引为5
@@ -694,6 +694,7 @@ class DimCalculatorGUI(QMainWindow):
         precision_spin.setValue(self.precisionSet)
         update_precision_state(self.precisionMode)
         dialog.checkUnusual.setChecked(self.show_unusual)
+        dialog.startDebug.setChecked(self.debug)
 
         initial_precisionMode = self.precisionMode
         initial_precisionSet = self.precisionSet
@@ -726,6 +727,11 @@ class DimCalculatorGUI(QMainWindow):
                 self.show_unusual = show_unusual
                 self.update_right_buttons()
             debug = dialog.startDebug.isChecked()
+            self.debug = debug
+            if debug:
+                logging.getLogger().setLevel(logging.DEBUG)
+            else:
+                logging.getLogger().setLevel(logging.ERROR)
             log_to_info = dialog.output2infoArea.isChecked()
             self.update_status_label()
             if self.dump_settings():
@@ -761,6 +767,7 @@ class DimCalculatorGUI(QMainWindow):
                 self.precisionSet = config.get("precisionSet", 12)
                 self.precision = config.get("precision", 12)
                 self.show_unusual = config.get("showUnusual", False)
+                self.debug = config.get("debug", False)
         except Exception as e:
             QMessageBox.warning(None, "警告", f"读取设置时发生意外错误：\n{e}")
             logging.error(f"failed load settings: {e}")
@@ -775,6 +782,7 @@ class DimCalculatorGUI(QMainWindow):
             config["precisionMode"] = self.precisionMode
             config["precisionSet"] = self.precisionSet
             config["showUnusual"] = self.show_unusual
+            config["debug"] = self.debug
             with open("datas/config.json", "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=4)
             # raise Exception("test")

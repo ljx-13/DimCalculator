@@ -1,11 +1,4 @@
-DEBUG = True
-if DEBUG:
-    import cProfile
-    import pstats
-    from pstats import SortKey
-    profiler = cProfile.Profile()
-    profiler.enable()
-
+import json
 import sys
 import os
 import logging
@@ -13,6 +6,15 @@ import traceback
 from logging.handlers import RotatingFileHandler
 from PyQt5 import __file__ as pyqt5_file
 
+with open("datas/config.json", "r", encoding="utf-8") as f:
+    config = json.load(f)
+    debug = config["debug"]
+if debug:
+    import cProfile
+    import pstats
+    from pstats import SortKey
+    profiler = cProfile.Profile()
+    profiler.enable()
 
 os.makedirs("log", exist_ok=True)
 logging.getLogger("PyQt5.uic").setLevel(logging.WARNING)
@@ -22,7 +24,7 @@ if getattr(sys, 'frozen', False):
     # 打包后：从exe临时目录找
     plugin_path = os.path.join(sys._MEIPASS, 'platforms')
     handler = RotatingFileHandler("log/DimCalculator.log", maxBytes=1204 * 1024, backupCount=3, encoding='utf-8')
-    logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR,
+    logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR,
                         format="%(asctime)s - %(levelname)s - %(message)s",
                         handlers=[handler],  # 输出到文件
                         )
@@ -30,7 +32,7 @@ else:
     # 本地运行：自动从PyQt5安装目录找
     plugin_path = os.path.join(os.path.dirname(pyqt5_file), 'Qt5', 'plugins', 'platforms')
     sys.stdout.reconfigure(encoding='utf-8')
-    logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR,
+    logging.basicConfig(level=logging.DEBUG if debug else logging.ERROR,
                         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                         )
 
@@ -86,7 +88,7 @@ if __name__ == '__main__':
         QTimer.singleShot(0, load_main_window)
         # window = DimCalculatorGUI()
         # window.show()
-        if DEBUG:
+        if debug:
             profiler.disable()
             profiler.dump_stats('log/startup_profile.prof')
             logging.info("\n\n==========<NEW START>==========>")

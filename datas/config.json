@@ -4,5 +4,6 @@
     "precision": 12,
     "precisionMode": 5,
     "precisionSet": 12,
-    "showUnusual": false
+    "showUnusual": false,
+    "debug": false
 }

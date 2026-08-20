@@ -188,7 +188,7 @@ QCheckBox {
        <item row="6" column="1">
         <widget class="QCheckBox" name="startDebug">
          <property name="text">
-          <string>开启调试模式</string>
+          <string>输出调试日志</string>
          </property>
         </widget>
        </item>
