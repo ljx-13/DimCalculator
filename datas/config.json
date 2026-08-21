@@ -6,5 +6,5 @@
     "precisionSet": 12,
     "showUnusual": false,
     "debug": false,
-    "log2info": true
+    "log2info": false
 }

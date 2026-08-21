@@ -19,6 +19,7 @@ class DimCalculatorCore:
         """
         :param precision: 命名空间中常量精度
         """
+        self.calculate_error: Exception | None = None
         self.log_text = ""
         self.ureg = ureg
         self.__units = self._load_units(units_file)
@@ -730,6 +731,7 @@ class DimCalculatorCore:
         """
         # raise SyntaxError
         self.log_text = ""
+        self.calculate_error = None
         loger.debug("========== DEBUG ==========")
         self._log("origin: ", original_exper)
         exper = self.processed(original_exper)
@@ -762,6 +764,7 @@ class DimCalculatorCore:
             self._log("final result: ", result_str)
         except Exception as e:
             # 诊断错误
+            self.calculate_error = e
             diagnosis = self.diagnose_error(e)
             return None, diagnosis
         else:

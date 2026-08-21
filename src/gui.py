@@ -216,6 +216,9 @@ class DimCalculatorGUI(QMainWindow):
         about = QAction("关于", self)
         about.triggered.connect(self.show_about)
         help_menu.addAction(about)
+        feedback = QAction("反馈", self)
+        feedback.triggered.connect(self.show_feedback)
+        help_menu.addAction(feedback)
 
     @catch_exceptions("更新右侧面板按钮时崩溃")
     def update_right_buttons(self):
@@ -628,6 +631,87 @@ class DimCalculatorGUI(QMainWindow):
             text_browser.setMarkdown(content)
             layout.addWidget(text_browser)
             dialog.exec_()
+
+    @catch_exceptions("打开反馈窗口时崩溃")
+    def show_feedback(self, checked=False):
+        from PyQt5.QtWidgets import QTextEdit, QPushButton, QHBoxLayout
+
+        def get_version():
+            try:
+                with open("datas/config.json", "r", encoding="utf-8") as f:
+                    return json.load(f).get("version", "未知版本")
+            except:
+                return "获取失败"
+        def get_system_info():
+            import platform
+            return f"{platform.system()} {platform.release()}"
+        def copy_info():
+            clipboard = QApplication.clipboard()
+            clipboard.setText("\n".join(info))
+            QMessageBox.information(dialog, "已复制", "调试信息已复制到剪贴板")
+        def open_github():
+            import webbrowser
+            webbrowser.open("https://github.com/ljx-13/DimCalculator/issues/new")
+        def open_log_folder():
+            import os
+            import subprocess
+            log_dir = os.path.abspath("log")
+            if os.path.exists(log_dir):
+                subprocess.Popen(f'explorer "{log_dir}"')
+        def get_err():
+            import traceback
+            e = self.core.calculate_error
+            if e:
+                return "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            else:
+                return "(暂无异常)"
+
+        dialog = QDialog(self)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
+        dialog.setWindowTitle("反馈与调试信息")
+        dialog.resize(600, 500)
+        layout = QVBoxLayout(dialog)
+        # 提示
+        tip = QLabel("如果当前计算结果异常，请复制下方信息发送给开发者")
+        tip.setWordWrap(True)
+        layout.addWidget(tip)
+        # 文本框
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setStyleSheet("font-size: 12px;")
+        # 构建调试信息
+        info = [
+            f"版本 {get_version()}",
+            f"系统: {get_system_info()}",
+            f"精度: {self.precision} 位有效数字",
+            "\n--- 当前计算日志 ---",
+            self.core.log_text if self.core.log_text else "(暂无日志)",
+            "\n--- 当前错误日志 ---",
+            get_err()
+            ]
+        text_edit.setText("\n".join(info))
+        layout.addWidget(text_edit)
+        # 按钮
+        btn_layout = QHBoxLayout()
+        copy_btn = QPushButton("复制信息")
+        issue_btn = QPushButton("打开 Github Issues")
+        close_btn = QPushButton("关闭")
+        folder_btn = QPushButton("打开日志文件夹")
+
+        copy_btn.clicked.connect(copy_info)
+        issue_btn.clicked.connect(open_github)
+        folder_btn.clicked.connect(open_log_folder)
+        close_btn.clicked.connect(dialog.accept)
+
+        btn_layout.addWidget(copy_btn)
+        btn_layout.addWidget(folder_btn)
+        btn_layout.addWidget(issue_btn)
+
+        btn_layout.addStretch()
+        btn_layout.addWidget(close_btn)
+        layout.addLayout(btn_layout)
+
+        dialog.exec_()
 
     @catch_exceptions("打开欢迎窗口时崩溃")
     def show_welcome(self, checked=False):
