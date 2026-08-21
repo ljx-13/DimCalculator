@@ -13,6 +13,7 @@ def reset():
         config["precisionMode"] = 5
         config["showUnusual"] = False
         config["debug"] = False
+        config["log2info"] = False
     with open("datas/config.json", "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=4)
 

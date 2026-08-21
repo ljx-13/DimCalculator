@@ -181,7 +181,7 @@ QCheckBox {
        <item row="6" column="0">
         <widget class="QLabel" name="label_5">
          <property name="text">
-          <string>日志输出</string>
+          <string>调试模式</string>
          </property>
         </widget>
        </item>

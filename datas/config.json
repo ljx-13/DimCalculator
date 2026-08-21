@@ -5,5 +5,6 @@
     "precisionMode": 5,
     "precisionSet": 12,
     "showUnusual": false,
-    "debug": false
+    "debug": false,
+    "log2info": true
 }

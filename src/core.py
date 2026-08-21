@@ -6,7 +6,7 @@ import math
 import json
 import re
 
-# FUNC_NAMES = {'sin', 'cos', 'tan', 'log', 'lg', 'ln', 'abs', 'sqrt'}
+DEBUG_LEVEL = {logging.DEBUG: "DEBUG", logging.INFO: "INFO", logging.WARNING: "WARNING", logging.ERROR: "ERROR", logging.CRITICAL: "CRITICAL"}
 SUPER_SCRIPT = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
                        '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', }
 
@@ -19,6 +19,7 @@ class DimCalculatorCore:
         """
         :param precision: 命名空间中常量精度
         """
+        self.log_text = ""
         self.ureg = ureg
         self.__units = self._load_units(units_file)
         self.__consts = self._load_consts(constants_file)
@@ -38,6 +39,11 @@ class DimCalculatorCore:
         """List[(英文名称, 显示名称, 符号, 值, 是否常用)]"""
         return self.__consts
 
+    def _log(self, *args, level=logging.DEBUG):
+        """记录日志"""
+        s = "".join(map(str, args))
+        loger.log(level, s)
+        self.log_text += f"--{DEBUG_LEVEL[level]}-- {s}\n"
 
     def processed(self, exper):
         """处理输入"""
@@ -66,14 +72,15 @@ class DimCalculatorCore:
                 exper = self._replace_if_surrounded_by_math(exper, "_" + symbol, name)
             else:  # 数学常量
                 exper = self._replace_if_surrounded_by_math(exper, symbol, name)
-        loger.debug("replaced: " + exper)
+        self._log("replaced: ", exper)
 
         exper = self._atomize_units(exper)
-        loger.debug("atomized: " + exper)
+        self._log("atomized: ", exper)
         exper = (exper.replace("÷", "/").replace(":", "/")
                  .replace("^", "**").replace("·", "*"))  # 与复合单位中/和*区分
 
         exper = self._insert_mul(exper)
+        self._log("insert *: ", exper)
 
         # 补全右括号
         s9s0 = exper.count("(") - exper.count(")")
@@ -223,7 +230,6 @@ class DimCalculatorCore:
                 result.append(exp[i])
                 i += 1
         exp = "".join(result)
-        loger.debug("insert *: " + exp)
         return exp
 
     @staticmethod
@@ -290,7 +296,7 @@ class DimCalculatorCore:
                 if "/" not in symbol:
                     if not hasattr(self.ureg, name):
                         self.ureg.define(f"{name} = {definition} = {symbol}")
-                        loger.debug("new_define_unit: " + name)
+                        self._log("new_define_unit: ", name)
                 units_list.append((name, display_name, symbol, common))
             # 导入合并单位
             preferred_unit_names = data.get("preferred_units", [])
@@ -299,14 +305,14 @@ class DimCalculatorCore:
             # print(ureg.default_preferred_units)
             return units_list
         except FileNotFoundError:
-            loger.error("FileNotFoundError: " + filename)
+            self._log("FileNotFoundError: ", filename, level=logging.ERROR)
             return []
         except Exception as e:
-            loger.error(type(e).__name__ + ": " + str(e))
+            self._log(type(e).__name__, ": ", str(e), level=logging.ERROR)
             return []
 
     # noinspection PyMethodMayBeStatic
-    def _load_consts(self, filename) -> list:
+    def _load_consts(self, filename: str) -> list:
         """导入常量，返回常量字典"""
         try:
             with open(filename, 'r', encoding="utf-8") as f:
@@ -321,10 +327,10 @@ class DimCalculatorCore:
                 const_list.append((name, display_name, symbol, value, common))
             return const_list
         except FileNotFoundError:
-            loger.error("FileNotFoundError: " + filename)
+            self._log("FileNotFoundError: ", filename, level=logging.ERROR)
             return []
         except Exception as e:
-            loger.error(type(e).__name__ + ": " + str(e))
+            self._log(type(e).__name__, ": ", str(e), level=logging.ERROR)
             return []
 
     def _build_namespace(self):
@@ -529,8 +535,7 @@ class DimCalculatorCore:
         # 5. 默认提示
         return f"❌ 计算错误：{err_msg}\n💡 提示：请检查表达式语法、单位是否正确，或简化表达式后重试。"
 
-    @staticmethod
-    def _format_scientific(result: str) -> str:
+    def _format_scientific(self, result: str) -> str:
         """把 1.234e+15 转成 1.234×10¹⁵，把 **10 转成上角标"""
         # 处理科学计数法
         # \d+(?:\.\d+)?)    捕获组1：数字，可有小数
@@ -553,7 +558,7 @@ class DimCalculatorCore:
                 return ''.join(SUPER_SCRIPT.get(c, c) for c in exp)  # type: ignore
         result = (re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result))
         result = result.replace("*", "⋅")
-        loger.debug(f"format scientific: {result}")
+        self._log("format scientific: ", result)
         return result
 
     @staticmethod
@@ -586,7 +591,7 @@ class DimCalculatorCore:
         """将Quantity的单位转换到通用单位"""  # todo: 转至标准单位，转至基本单位
         if isinstance(result, pint.Quantity):
             # 如果是无量纲，直接返回数值
-            loger.debug(f"original dimensionality: {result.dimensionality}")
+            self._log(f"original dimensionality: ", result.dimensionality)
             if result.dimensionless:
                 if not result.units in ("rad", "r", "deg", "degree"):
                     return result.to_base_units().magnitude
@@ -595,16 +600,16 @@ class DimCalculatorCore:
             try:
                 result = result.to_preferred()
             except Exception as e:
-                loger.warning(f"failed auto to_preferred(): {result}  # {e}")
+                self._log(f"failed auto to_preferred(): {result}  # {e}", level=logging.WARNING)
             else:
-                loger.debug(f"auto to_preferred(): {result}")
+                self._log("auto to_preferred(): ", result)
             finally:
                 def get_result_and_mag(obj):
                     result_ = result.to(obj)
                     return result_, abs(result_.magnitude)
                 for u in self.preferred_units:
                     if result.check(u):
-                        loger.warning("nonauto to_preferred(): " + u)
+                        self._log("nonauto to_preferred(): ", u, level=logging.WARNING)
                         result = result.to(u)
                 if result.check("Hz"):
                     if "r" not in str(result.units):
@@ -718,42 +723,43 @@ class DimCalculatorCore:
         else:
             raise TypeError
 
-    def evaluate(self, original_exper: str) -> tuple[str | None, str | None]:
+    def evaluate(self, original_exper: str) -> tuple[str, None] | tuple[None, str]:
         """
         计算表达式
         :return: (结果字符串, 错误信息)
         """
         # raise SyntaxError
-        loger.debug("\n========== DEBUG ==========")
-        loger.debug("origin: " + original_exper)
+        self.log_text = ""
+        loger.debug("========== DEBUG ==========")
+        self._log("origin: ", original_exper)
         exper = self.processed(original_exper)
-        loger.debug("final exper: " + exper)
+        self._log("final exper: ", exper)
         try:
             result = self._safe_eval(exper)
-            loger.debug(f"original result: {result}")
+            self._log("original result: ", result)
             # 格式化输出
             if isinstance(result, pint.Quantity):
                 # 紧凑格式：5m 而不是 5 meter
                 try:
                     # 智能格式化数值
                     result = self._to_preferred(result)
-                    loger.debug(f"to preferred: {result}")
+                    self._log("to preferred: ", result)
                     if isinstance(result, pint.Quantity):
                         mag = result.magnitude
                     else:
                         mag = result
                     mag_str = self._round_magnitude(mag)
                     result_str = f"{mag_str}{result.units:~}".replace(" ", "")
-                    loger.debug("format: " + result_str)
+                    self._log("format: ", result_str)
                 except Exception as e:
-                    loger.warning(f"failed to format result:  {str(result)}  # {str(e)}")
+                    self._log(f"failed to format result:  {str(result)}  # {str(e)}", level=logging.WARNING)
                     result_str = str(result).replace(" ", "")
                 # 把1/X改成X^-1的格式
                 result_str = re.sub(r'1/([a-zA-Z_][a-zA-Z0-9_]*)', r'\1⁻¹', result_str)
             else:
                 result_str = str(self._round_magnitude(result))
             result_str = result_str.replace("deg", "°").replace("°C", "℃").replace("°F", "℉")
-            loger.debug("final result: " + result_str)
+            self._log("final result: ", result_str)
         except Exception as e:
             # 诊断错误
             diagnosis = self.diagnose_error(e)

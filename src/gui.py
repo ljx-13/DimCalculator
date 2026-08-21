@@ -48,6 +48,7 @@ class DimCalculatorGUI(QMainWindow):
         self.precision = 12
         self.show_unusual = False
         self.debug = False
+        self.if_log2info = False
         self.load_settings()
         self.core = DimCalculatorCore(precision=self.precision)
         self.initUI()
@@ -137,6 +138,8 @@ class DimCalculatorGUI(QMainWindow):
         self.info_text.setReadOnly(True)
         self.info_text.setMaximumHeight(300)
         main_layout.addWidget(self.info_text)
+        if self.if_log2info:
+            self.info_text.setText(self.core.log_text)
 
         # 菜单栏和状态栏
         self._create_menubar()
@@ -407,10 +410,16 @@ class DimCalculatorGUI(QMainWindow):
         result_str, error_msg = self.core.evaluate(expr)
         if error_msg:
             self.result_label.setText("错误")
-            self.info_text.setText(error_msg)
+            if self.if_log2info:
+                self.info_text.setText(self.core.log_text + "\n" + error_msg)
+            else:
+                self.info_text.setText(error_msg)
         else:
-            self.result_label.setText(result_str)  # type: ignore
-            self.info_text.clear()
+            self.result_label.setText(result_str)
+            if self.if_log2info:
+                self.info_text.setText(self.core.log_text)
+            else:
+                self.info_text.clear()
 
     @catch_exceptions("处理历史记录时崩溃")
     def show_history(self, checked=False):
@@ -703,6 +712,7 @@ class DimCalculatorGUI(QMainWindow):
         update_precision_state(self.precisionMode)
         dialog.checkUnusual.setChecked(self.show_unusual)
         dialog.startDebug.setChecked(self.debug)
+        dialog.output2infoArea.setChecked(self.if_log2info)
 
         initial_precisionMode = self.precisionMode
         initial_precisionSet = self.precisionSet
@@ -742,7 +752,8 @@ class DimCalculatorGUI(QMainWindow):
                     QMessageBox.information(dialog, "调试模式", "调试模式已开启\n日志将输出到 log/DimCalculator.log")
                 else:
                     logging.getLogger().setLevel(logging.ERROR)
-            log_to_info = dialog.output2infoArea.isChecked()
+            log2info = dialog.output2infoArea.isChecked()
+            self.if_log2info = log2info
             self.update_status_label()
             if self.dump_settings():
                 dialog.accept()
@@ -778,6 +789,7 @@ class DimCalculatorGUI(QMainWindow):
                 self.precision = config.get("precision", 12)
                 self.show_unusual = config.get("showUnusual", False)
                 self.debug = config.get("debug", False)
+                self.if_log2info = config.get("log2info", False)
         except Exception as e:
             QMessageBox.warning(None, "警告", f"读取设置时发生意外错误：\n{e}")
             logging.error(f"failed load settings: {e}")
@@ -793,6 +805,7 @@ class DimCalculatorGUI(QMainWindow):
             config["precisionSet"] = self.precisionSet
             config["showUnusual"] = self.show_unusual
             config["debug"] = self.debug
+            config["log2info"] = self.if_log2info
             with open("datas/config.json", "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=4)
             # raise Exception("test")
