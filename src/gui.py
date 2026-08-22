@@ -858,7 +858,7 @@ class DimCalculatorGUI(QMainWindow):
             dialog.reject()
 
         dialog.ok.clicked.connect(lambda: save())
-        dialog.cancle.clicked.connect(lambda: cancel())
+        dialog.cancel.clicked.connect(lambda: cancel())
         dialog.reset.clicked.connect(lambda: reset())
 
         dialog.exec_()

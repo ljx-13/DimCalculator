@@ -248,7 +248,7 @@ QCheckBox {
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="cancle">
+      <widget class="QPushButton" name="cancel">
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
