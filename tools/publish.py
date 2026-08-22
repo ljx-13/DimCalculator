@@ -71,7 +71,7 @@ def step_pack():
         shutil.rmtree("dist")
     cmd = (
         'pyinstaller --onedir --windowed '
-        '--icon=datas/icon.ico --name DimCalculator '
+        '--icon=datas/icon/light.ico --name DimCalculator '
         '--add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" '
         'main.py'
     )

@@ -7,7 +7,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QPushButton, \
     QTabWidget, QTextEdit, QMessageBox, QApplication, QDialog, QAction, QScrollArea
 # from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QSize
 
 from .core import DimCalculatorCore
 
@@ -19,6 +19,7 @@ func_data = [  # （名字，描述，符号，是否常用）
     ("abs", "绝对值", "|x|", True), ("mod", "取余", "取余", True), ("factorial", "阶乘", "n!", False),
     ("sinh", "双曲正弦", "sinh", False), ("cosh", "双曲余弦", "cosh", False), ("tanh", "双曲正切", "tanh", False),
 ]
+get_std_icon = QApplication.style().standardIcon
 
 def catch_exceptions(msg=""):
     """捕获函数中的异常，弹出错误窗口并记录日志"""
@@ -59,7 +60,7 @@ class DimCalculatorGUI(QMainWindow):
         self.setWindowTitle("DimCalculator - 智能量纲计算器")
         self.setMinimumSize(800, 750)
         # self.setMaximumWidth(1250)
-        self.setWindowIcon(QIcon("datas/icon.ico"))
+        self.setWindowIcon(QIcon("datas/icon/light.ico"))
         # 加载样式表
         try:
             with open("ui/style.qss", "r", encoding="utf-8") as f:
@@ -104,6 +105,7 @@ class DimCalculatorGUI(QMainWindow):
         ]
         for text, row, col, is_op, tip in buttons:
             btn = QPushButton(text)
+            btn.setProperty("insert_text", text)
             btn.setObjectName("numBtn")
             btn.setToolTip(tip)
             if text == "单位转换":
@@ -112,13 +114,10 @@ class DimCalculatorGUI(QMainWindow):
                 btn.setObjectName("opBtn")
             if text == '=':
                 btn.setStyleSheet("background-color: #0078d7; color: white;")
-            elif text == "√":  # 确保根号正常显示
-                btn.setStyleSheet("""
-                    QPushButton {
-                        font-family: "Cambria Math", "Segoe UI Symbol", "Consolas", sans-serif; 
-                        font-size: 18px
-                    }
-                    """)
+            elif text == "√":
+                btn.setIcon(QIcon("datas/icon/sqrt.png"))
+                btn.setText("")
+                btn.setIconSize(QSize(30, 30))
             btn.clicked.connect(self.on_button_clicked)
             left_grid.addWidget(btn, row, col)
         left_widget.setLayout(left_grid)
@@ -199,6 +198,7 @@ class DimCalculatorGUI(QMainWindow):
         setting_menu = menubar.addMenu("设置")
         setting = QAction("设置", self)
         setting.triggered.connect(self.show_settings)
+        setting.setIcon(QIcon("datas/icon/setting.png"))
         setting_menu.addAction(setting)
 
         memory_menu = menubar.addMenu("记忆")
@@ -212,6 +212,7 @@ class DimCalculatorGUI(QMainWindow):
         help_menu.addAction(welcome)
         help_ = QAction("用户手册", self)
         help_.triggered.connect(self.show_help)
+        help_.setIcon(get_std_icon(QApplication.style().SP_TitleBarContextHelpButton))
         help_menu.addAction(help_)
         about = QAction("关于", self)
         about.triggered.connect(self.show_about)
@@ -374,7 +375,7 @@ class DimCalculatorGUI(QMainWindow):
     @catch_exceptions("处理按钮事件时崩溃")
     def on_button_clicked(self, checked=False):
         btn = self.sender()
-        text = btn.text()
+        text = btn.property("insert_text")
         match text:
             case '单位转换':
                 # 切换转换模式状态，并改变按钮样式标记按下状态
@@ -521,7 +522,7 @@ class DimCalculatorGUI(QMainWindow):
 
         # 图标
         icon_label = QLabel()
-        icon_label.setPixmap(QIcon("datas/icon.ico").pixmap(64, 64))
+        icon_label.setPixmap(QIcon("datas/icon/light.ico").pixmap(64, 64))
         icon_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(icon_label)
 
@@ -697,6 +698,7 @@ class DimCalculatorGUI(QMainWindow):
         issue_btn = QPushButton("打开 Github Issues")
         close_btn = QPushButton("关闭")
         folder_btn = QPushButton("打开日志文件夹")
+        folder_btn.setIcon(get_std_icon(QApplication.style().SP_DirIcon))
 
         copy_btn.clicked.connect(copy_info)
         issue_btn.clicked.connect(open_github)
@@ -781,7 +783,7 @@ class DimCalculatorGUI(QMainWindow):
         dialog.exec_()
 
     @catch_exceptions("打开设置页面时崩溃")
-    def show_settings(self, checked=False):  # todo
+    def show_settings(self, checked=False):
         dialog = QDialog(self)
         from PyQt5.uic import loadUi  # type: ignore
         loadUi("ui/settings.ui", dialog)
@@ -861,12 +863,15 @@ class DimCalculatorGUI(QMainWindow):
         dialog.cancel.clicked.connect(lambda: cancel())
         dialog.reset.clicked.connect(lambda: reset())
 
+        # dialog.ok.setIcon(get_std_icon(QApplication.style().SP_DialogOkButton))
+        # dialog.cancel.setIcon(get_std_icon(QApplication.style().SP_DialogCancelButton))
+
         dialog.exec_()
 
     @catch_exceptions("读取设置时崩溃")
     def load_settings(self):
         try:
-            with open("datas/config.json", "r", encoding="utf-8") as f:  # fixme
+            with open("datas/config.json", "r", encoding="utf-8") as f:  # todo
                 config = json.load(f)
                 self.precisionMode = config.get("precisionMode", 5)
                 self.precisionSet = config.get("precisionSet", 12)

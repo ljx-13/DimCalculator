@@ -67,37 +67,48 @@ python main.py
 python tools/test.py
 
 # 6. 如需打包为exe
-pyinstaller --onedir --windowed --icon=datas/icon.ico --name DimCalculator --add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" main.py
+pyinstaller --onedir --windowed --icon=datas/icon/light.ico --name DimCalculator --add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" main.py
 ```
 
 ## 项目结构
 
 ```text
 DimCalculator/
-   ├── .gitignore
-   ├── LICENSE
-   ├── README.md
-   ├── datas/  # 数据文件
-   │   ├── config.json  # 配置文件
-   │   ├── consts.json  # 常量
-   │   ├── icon.ico
-   │   └── units.json  # 单位
-   ├── docs/
-   │   ├── help.md  # 帮助文档
-   │   └── images/  # 演示图片
-   ├── fixme.txt  # 待修复bug及开发计划
-   ├── main.py
-   ├── requirements.txt
-   ├── src/  # 源代码
-   │   ├── __init__.py
-   │   ├── core.py  # 计算引擎
-   │   └── gui.py  # 桌面端界面
-   ├── tools/
-   │   ├── publish.py  # 更新版本打包发布（自用）
-   │   ├── reset.py  # 重置设置
-   │   ├── test.py  # 测试
-   │   └── tree.py  # 获取项目结构
-   └── ui/
-       ├── settings.ui  # 设置界面
-       └── style.qss  # 样式表
+    ├── .gitignore
+    ├── LICENSE
+    ├── README.md
+    ├── datas/  # 数据文件
+    │   ├── config.json  # 配置文件
+    │   ├── consts.json  # 常量
+    │   ├── icon/
+    │   │   └── appicon-forge/  # 软件图标预设，可用AppIcon Forge编辑
+    │   └── units.json  # 单位
+    ├── docs/
+    │   ├── help.md  # 帮助文档
+    │   └── images/  # 演示图片
+    ├── fixme_todo.txt  # 待修复bug及开发计划
+    ├── main.py
+    ├── requirements.txt
+    ├── src/  # 源代码
+    │   ├── __init__.py
+    │   ├── core.py  # 计算引擎
+    │   └── gui.py  # 桌面端界面
+    ├── tools/
+    │   ├── publish.py  # 更新版本打包发布（自用）
+    │   ├── reset.py  # 重置设置
+    │   ├── test.py  # 测试
+    │   └── tree.py  # 获取项目结构
+    └── ui/
+        ├── settings.ui  # 设置界面
+        └── style.qss  # 样式表
 ```
+
+## 鸣谢
+
+### 图标来源
+
+根号：[Tabler Icons](https://tabler.io/icons) (MIT)
+
+设置：[IconPark](https://iconpark.oceanengine.com/) (Apache 2.0)
+
+应用图标制作：[AppIcon Forge](https://zhangyu1818.github.io/appicon-forge/)
