@@ -1,6 +1,11 @@
 # DimCalculator - 智能量纲计算器
 
-**@ author: ljx-13**
+[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
+[![Release](https://img.shields.io/github/v/release/ljx-13/DimCalculator)](https://github.com/ljx-13/DimCalculator/releases)
+
+---
 
 ## 项目简介
 
@@ -8,26 +13,28 @@
 
 在高中物理学习中，单位换算是很多同学的易错点。本软件支持直接输入带单位的表达式（如 `5m + 20cm`），自动进行单位换算和量纲检查，并给出清晰的计算结果。
 
-本软件有助于帮助用户避免繁杂的单位换算，同时帮助用户养成带单位运算的习惯。
+本软件有助于帮助用户避免繁杂的单位换算，同时帮助用户养成带单位运算的习惯，培养量纲思维。
 
-（本软件尚未经过完整测试，可能存在计算错误情况，请勿过度依赖）
+（本软件尚未经过完整测试，可能存在计算错误情况，若不放心可在设置中打开`输出处理日志至信息区`监控程序运行。若发现问题，可在`设置-反馈`界面提交反馈）
 
 ### 主要功能
 
-(演示图片来自早期版本，请以实际界面为准)
+(演示图片可能不代表最新界面，请以实际为准)
 
 - **全鼠标操作**：仿 Windows 11 计算器界面，无需键盘即可完成所有操作
-- **带单位运算**：支持 `5m + 20cm` 等自然输入
-![基本功能.png](docs/images/%E5%9F%BA%E6%9C%AC%E5%8A%9F%E8%83%BD.png)
-- **物理常数库**：内置重力加速度 `_g`、光速 `_c`、普朗克常数 `_h` 等常用物理常数
-![物理常数.png](docs/images/%E7%89%A9%E7%90%86%E5%B8%B8%E6%95%B0.png)
-- **三角函数**：支持 sin、cos、tan，自动识别角度（deg）和弧度（rad）
-![数学函数.png](docs/images/%E6%95%B0%E5%AD%A6%E5%87%BD%E6%95%B0.png)
+- **带单位运算**：支持 `5m+20cm` 等带单位输入，可自由组合单位，无需拘束于公式
+![自由计算.png](docs/images/%E8%87%AA%E7%94%B1%E8%AE%A1%E7%AE%97.png)
+- **物理常数库**：内置重力加速度`_g`、光速`_c`等常用物理常数
+![常数.png](docs/images/%E5%B8%B8%E6%95%B0.png)
+- **函数**：支持sin、cos、tan等常见数学函数，自动识别角度（deg）和弧度（rad）
+![函数.png](docs/images/%E5%87%BD%E6%95%B0.png)
 - **智能错误诊断**：对单位不匹配的情况给出具体修改建议
 ![错误分析.png](docs/images/%E9%94%99%E8%AF%AF%E5%88%86%E6%9E%90.png)
 - **历史记录**：自动保存计算历史，支持清空和复制
-![历史记录保存.png](docs/images/%E5%8E%86%E5%8F%B2%E8%AE%B0%E5%BD%95%E4%BF%9D%E5%AD%98.png)
+![历史记录.png](docs/images/%E5%8E%86%E5%8F%B2%E8%AE%B0%E5%BD%95.png)
 - **上一次结果引用**：使用 `ans` 引用上一次计算结果
+- **自定义设置**：可自由设置常数精度、不常用项是否显示、输出调试日志等设置项
+![设置.png](docs/images/%E8%AE%BE%E7%BD%AE.png)
 
 ## 快速开始
 
@@ -47,6 +54,8 @@
 部分开发中的功能可能尚未提供发行版，您可以从源码运行
 
 ```bash
+# 环境要求: Python 3.12+
+
 # 1. 克隆仓库
 git clone https://github.com/ljx-13/DimCalculator.git
 # 或 git clone https://gitee.com/ljx-13/dim-calculator.git
