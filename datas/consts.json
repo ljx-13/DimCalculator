@@ -5,6 +5,7 @@
         { "name": "_g", "display_name": "重力加速度", "symbol": "g", "value": "9.80665*m/s**2", "common": true },
         { "name": "_c", "display_name": "光速", "symbol": "c", "value": "299792458*m/s", "common": true },
         { "name": "_R", "display_name": "理想气体常数", "symbol": "R", "value": "8.314462618*J/mol/K", "common": false },
+        { "name": "_p0", "display_name": "标准大气压", "symbol": "p₀", "value": "101325*Pa", "common": true },
         { "name": "_G", "display_name": "万有引力常数", "symbol": "G", "value": "6.67430e-11*m**3/kg/s**2", "common": true },
         { "name": "_k_e", "display_name": "库仑常量", "symbol": "ke", "value": "8.9875517923e9*N*m**2/C**2", "common": true },
         { "name": "_e_charge", "display_name": "元电荷", "symbol": "e", "value": "1.60217662e-19*C", "common": true },
