@@ -567,13 +567,13 @@ class DimCalculatorCore:
         """四舍五入，同时避免丢失极大极小值"""
         if isinstance(value, pint.Quantity):
             value = value.magnitude
-        if isinstance(value, float):
-            if 0 < abs(value) < 1e-10 or abs(value) > 1e10:
-                return f"{value:.12g}".rstrip('0').rstrip('.')
-            rounded = round(value, 12)
-            if rounded.is_integer():
-                return str(int(rounded))
-            result = f"{rounded:.12g}"
+        if isinstance(value, int) and abs(value) > 1e308:
+            return str(value)  # 防止超出浮点范围
+        if isinstance(value, (int, float)):
+            result = f"{value:.12g}"  # 12位有效数字
+            if float(result).is_integer():
+                if abs(value) <= 12:
+                    return str(int(float(result)))  # int不支持科学计数法，用float做桥接
             # 去除e-06中的前导0
             parts = result.split('e')
             if len(parts) == 2:
@@ -583,7 +583,7 @@ class DimCalculatorCore:
                         exp = exp[0] + exp[2:]
                 else:
                     if exp[0] == '0':
-                        exp = exp[0] + exp[2:]
+                        exp = exp[1:]
                 result = parts[0].rstrip('0').rstrip('.') + 'e' + exp
             return result
         return str(value)
