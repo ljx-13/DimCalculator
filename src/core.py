@@ -49,7 +49,8 @@ class DimCalculatorCore:
     def processed(self, exper):
         """处理输入"""
         # 替换输入字符串中的部分字符
-        exper = (exper.replace("×", "*").replace("××", "* *").replace("⋅", "·")
+        exper = (exper.replace(" ", "")
+                 .replace("×", "*").replace("××", "* *").replace("⋅", "·")
                  .replace("\\", "/")
                  .replace("[", "(").replace("]", ")").replace("{", "(").replace("}", ")")
                  .replace("√(", "sqrt(").replace("%", "/100")
