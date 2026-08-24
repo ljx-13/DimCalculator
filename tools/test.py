@@ -293,6 +293,10 @@ def run_all_tests():
     test("100W * 5s", "500J")
     test("sin(30deg) + cos(60deg)", "1")
     # test("(10*kg * 9.8*m/s**2) / (2*m**2)", "49Pa")
+    test("_R×2mol×300K÷_p₀", "0.0492344196477m³")
+    test("1.12×10^10 eV÷_c^2", "12.0236939292u")
+    test("6mmHg-3Pa", "796.93432449Pa")
+
 
     # ========== 19. 单位转换 ==========
     print("\n单位转换 (convert_unit):")

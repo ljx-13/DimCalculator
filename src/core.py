@@ -638,8 +638,8 @@ class DimCalculatorCore:
                             result = result.to('g')
                         elif 1e-6 <= mag < 1e-3:
                             result = result.to('mg')
-                        # elif 1e-30 <= mag < 1e-20:
-                        #     result = result.to('u')
+                        elif 1e-30 <= mag < 1e-20:
+                            result = result.to('u')
                 elif result.check("m"):
                     if result.units not in ("mile", "ft", "ly"):
                         result, mag = get_result_and_mag("m")
