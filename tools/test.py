@@ -260,9 +260,9 @@ def run_all_tests():
     test("1500W", "1.5kW")
 
     # 密度
-    # test("1g/cm3", "1g/cm³") fixme
-    # test("0.0005g/cm3", "0.5kg/m³")
-    # test("0.001g/cm3", "1kg/m³")
+    test("1g/cm^3", "1g/cm³")
+    test("0.0005g/cm^3", "0.5kg/m³")
+    test("0.001g/cm^3", "1kg/m³")
 
     # 摩尔质量
     test("500g/mol", "500g/mol")

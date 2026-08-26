@@ -64,7 +64,11 @@ class DimCalculatorCore:
             lambda m: '^' + ''.join(map_[c_] for c_ in m.group()),
             exper
         )
-
+        # exper = re.sub(
+        #     r'(?<![eE])([a-zA-Z_]+)(\d+)',
+        #     lambda m: f"{m.group(1)}^{m.group(2)}",
+        #     exper
+        # )
         # 替换单位符号和常量
         for (name, dn, symbol, c) in self.units:
             if '/' not in symbol:
@@ -390,7 +394,7 @@ class DimCalculatorCore:
             if isinstance(x, pint.Quantity):
                 return abs(x.magnitude)
             return abs(x)
-        def log(x, base):
+        def log(x, base_):
             """取对数"""
             # 如果带单位，检查是否无量纲
             if isinstance(x, pint.Quantity):
@@ -398,7 +402,7 @@ class DimCalculatorCore:
                     raise ValueError(f"对数log()的参数必须无量纲，但输入了 {x.units}")
                 x = x.magnitude
             # 现在 x 是纯数字
-            return math.log(x, base)
+            return math.log(x, base_)
         def sqrt(x):  # todo: free sqrt
             """开方"""
             if isinstance(x, pint.Quantity):
