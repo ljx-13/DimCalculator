@@ -352,6 +352,20 @@ class DimCalculatorCore:
             'rad': self.ureg.radian, 'deg': self.ureg.degree,
         }
         namespace.update(basic_units)
+        # 让 pint 自动识别这些前缀组合，并加入 namespace
+        si_prefixes = ['n', 'µ', 'm', 'c', 'd', 'da', 'h', 'k', 'M', 'G', 'T', 'p', 'f']
+        base_names = ['s', 'g', 'm', 'A', 'V', 'W', 'N', 'Pa', 'J', 'Hz', 'mol', 'lm', 'lx']
+        for prefix in si_prefixes:
+            for base in base_names:
+                name = prefix + base
+                # 如果已经在 namespace 中，跳过（避免覆盖已有定义）
+                if name not in namespace:
+                    try:
+                        # 用 parse_expression 让 pint 自动解析前缀组合
+                        # 比如 "ns" -> nanosecond, "µm" -> micrometer
+                        namespace[name] = self.ureg.parse_expression(name)
+                    except Exception as e:
+                        self._log("failed to set prefixes:", type(e).__name__, ": ", str(e), level=logging.WARNING)
         # 常数
         for name, _, _, value_str, _ in self.consts:
             namespace[name] = ureg.parse_expression(self._round_quantity_str(value_str, self.precision))
