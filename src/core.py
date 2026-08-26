@@ -571,7 +571,7 @@ class DimCalculatorCore:
             else:
                 return ''.join(SUPER_SCRIPT.get(c, c) for c in exp)  # type: ignore
         result = (re.sub(r'\*\*(-?\d+(?:\.\d+)?)', replace_power, result))
-        result = result.replace("*", "⋅")
+        result = result.replace("**", "^").replace("*", "⋅")
         self._log("format scientific: ", result)
         return result
 
