@@ -295,9 +295,9 @@ class DimCalculatorCore:
                 display_name = unit["display_name"]
                 common = unit["common"]
                 # 注册单位
-                if "/" not in symbol:
+                if not ("/"  in symbol or "·" in symbol or "⋅" in symbol):
                     if not hasattr(self.ureg, name):
-                        self.ureg.define(f"{name} = {definition} = {symbol}")
+                        self.ureg.define(f"{name} = {definition} = {symbol}")  # fixme: cm3
                         self._log("new_define_unit: ", name)
                 units_list.append((name, display_name, symbol, common))
             # 导入合并单位
@@ -340,10 +340,8 @@ class DimCalculatorCore:
         namespace = {}
         # 所有注册的单位
         for name, dn, s, c in self.units:
-            try:
+            if not ("/" in s or "·" in s or "⋅" in s):
                 namespace[name] = getattr(self.ureg, name)
-            except AttributeError:
-                pass
         # 基本单位（保障）
         basic_units = {
             'm': self.ureg.m, 'kg': self.ureg.kg, 's': self.ureg.s, 'A': self.ureg.A,
