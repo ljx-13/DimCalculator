@@ -76,7 +76,7 @@ python main.py
 python tools/test.py
 
 # 6. 如需打包为exe
-pyinstaller --onedir --windowed --icon=datas/icon/light.ico --name DimCalculator --add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" main.py
+pyinstaller DimCalculator.spec  # 在项目根目录运行
 ```
 
 ## 项目结构
@@ -84,12 +84,14 @@ pyinstaller --onedir --windowed --icon=datas/icon/light.ico --name DimCalculator
 ```text
 DimCalculator/
     ├── .gitignore
+    ├── DimCalculator.spec  # pyinstaller配置文件
     ├── LICENSE
     ├── README.md
     ├── datas/  # 数据文件
     │   ├── config.json  # 配置文件
-    │   ├── consts.json  # 常量
+    │   ├── consts.json  # 常数
     │   ├── icon/
+    │   │   ├── ...
     │   │   └── appicon-forge/  # 软件图标预设，可用AppIcon Forge编辑
     │   └── units.json  # 单位
     ├── docs/

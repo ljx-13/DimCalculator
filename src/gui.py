@@ -1,4 +1,6 @@
 import json
+import os
+import sys
 import traceback
 from functools import wraps
 import logging
@@ -36,6 +38,13 @@ def catch_exceptions(msg=""):
         return wrapper
     return decorator
 
+def get_resource_path(relative_path):
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
 class DimCalculatorGUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -62,11 +71,12 @@ class DimCalculatorGUI(QMainWindow):
         # self.setMaximumWidth(1250)
         self.setWindowIcon(QIcon("datas/icon/light.ico"))
         # 加载样式表
+        style_path = get_resource_path("ui/style.qss")
         try:
-            with open("ui/style.qss", "r", encoding="utf-8") as f:
+            with open(style_path, "r", encoding="utf-8") as f:
                 self.setStyleSheet(f.read())
         except Exception as e:
-            logging.warning(f"样式表加载失败: {e}")
+            logging.error(f"样式表加载失败: {e}")
 
         central = QWidget()
         self.setCentralWidget(central)

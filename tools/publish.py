@@ -69,12 +69,7 @@ def step_commit(version):
 def step_pack():
     if os.path.exists("dist"):
         shutil.rmtree("dist")
-    cmd = (
-        'pyinstaller --onedir --windowed '
-        '--icon=datas/icon/light.ico --name DimCalculator '
-        '--add-data ".venv/Lib/site-packages/PyQt5/Qt5/plugins;PyQt5/Qt5/plugins" '
-        'main.py'
-    )
+    cmd = 'pyinstaller DimCalculator.spec'
     if run_cmd(cmd).returncode:
         print("打包失败！")
     dist_dir = "dist/DimCalculator"
