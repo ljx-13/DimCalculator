@@ -23,18 +23,18 @@
 
 - **全鼠标操作**：仿 Windows 11 计算器界面，无需键盘即可完成所有操作
 - **带单位运算**：支持 `5m+20cm` 等带单位输入，可自由组合单位，无需拘束于公式
-![自由计算.png](docs/images/%E8%87%AA%E7%94%B1%E8%AE%A1%E7%AE%97.png)
+![自由计算.png](docs/images/free_calculate.png)
 - **物理常数库**：内置重力加速度`_g`、光速`_c`等常用物理常数
-![常数.png](docs/images/%E5%B8%B8%E6%95%B0.png)
+![常数.png](docs/images/consts.png)
 - **函数**：支持sin、cos、tan等常见数学函数，自动识别角度（deg）和弧度（rad）
-![函数.png](docs/images/%E5%87%BD%E6%95%B0.png)
+![函数.png](docs/images/function.png)
 - **智能错误诊断**：对单位不匹配的情况给出具体修改建议
-![错误分析.png](docs/images/%E9%94%99%E8%AF%AF%E5%88%86%E6%9E%90.png)
+![错误分析.png](docs/images/error.png)
 - **历史记录**：自动保存计算历史，支持清空和复制
-![历史记录.png](docs/images/%E5%8E%86%E5%8F%B2%E8%AE%B0%E5%BD%95.png)
+![历史记录.png](docs/images/history.png)
 - **上一次结果引用**：使用 `ans` 引用上一次计算结果
 - **自定义设置**：可自由设置常数精度、不常用项是否显示、输出调试日志等设置项
-![设置.png](docs/images/%E8%AE%BE%E7%BD%AE.png)
+![设置.png](docs/images/settings.png)
 
 ## 快速开始
 
