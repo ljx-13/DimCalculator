@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)]()
-[![Release](https://img.shields.io/github/v/release/ljx-13/DimCalculator)](https://github.com/ljx-13/DimCalculator/releases)
+[![Release](https://img.shields.io/github/v/release/ljx-13/DimCalculator?include_prereleases)](https://github.com/ljx-13/DimCalculator/releases)
 
 ---
 
