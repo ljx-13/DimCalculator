@@ -56,7 +56,7 @@
 **光学**：\*cd
 
 - **注：℃、℉是偏移单位，作温差时请使用Δ℃、Δ℉**
-- - **注：带 `\*` 为不常用单位，默认不显示，但仍可正常使用，可在设置中启用。不常用常数和函数同理。**
+- **注：带 `\*` 为不常用单位，默认不显示，但仍可正常使用，可在设置中启用。不常用常数和函数同理。**
 
 你也可以自由组合新的复合单位，如`N·m`。
 
@@ -83,7 +83,24 @@
 - **错误提示**（尚不完善）：当表达式有误时，下方信息区会显示具体原因和建议修改方式。
 
 
+## 常见问题
+
+**Q：输入 `cm3` 报错怎么办？**  
+A：请使用 `cm^3` 表示立方厘米，或使用上标 `cm³`，`cm3` 是目前已知的待修复bug。
+
+**Q：三角函数结果不对？**  
+A：请确认角度单位——带 `°` 按角度计算，带 `rad` 按弧度计算，纯数默认按弧度。
+
+
 ## 仓库地址
 
+本软件在github和gitee开源
 - https://github.com/ljx-13/DimCalculator
-- https://gitee.com/ljx-13/dim-calculator（国内推荐）
+- https://gitee.com/ljx-13/dim-calculator
+
+
+## 下载与运行
+
+从 [GitHub Releases](https://github.com/ljx-13/DimCalculator/releases) 
+或 [Gitee 发布页（国内推荐）](https://gitee.com/ljx-13/dim-calculator/releases) 
+下载最新版本，解压后双击 `DimCalculator.exe` 即可运行。
