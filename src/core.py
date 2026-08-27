@@ -301,7 +301,7 @@ class DimCalculatorCore:
                 # 注册单位
                 if not ("/"  in symbol or "·" in symbol or "⋅" in symbol):
                     if not hasattr(self.ureg, name):
-                        self.ureg.define(f"{name} = {definition} = {symbol}")  # fixme: cm3
+                        self.ureg.define(f"{name} = {definition} = {symbol}")  # fixme: cm3 -> centi m3
                         self._log("new_define_unit: ", name)
                 units_list.append((name, display_name, symbol, common))
             # 导入合并单位

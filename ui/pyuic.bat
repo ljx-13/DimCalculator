@@ -1,0 +1,1 @@
+..\.venv\Scripts\pyuic5 settings.ui -o settings_ui.py

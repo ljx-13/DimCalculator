@@ -108,7 +108,9 @@ DimCalculator/
     │   ├── test.py  # 测试
     │   └── tree.py  # 获取项目结构
     └── ui/
+        ├── pyuic.bat  # 编译命令
         ├── settings.ui  # 设置界面
+        ├── settings_ui.py  # settings.ui编译结果
         └── style.qss  # 样式表
 ```
 

@@ -784,39 +784,41 @@ class DimCalculatorGUI(QMainWindow):
 
     @catch_exceptions("打开设置页面时崩溃")
     def show_settings(self, checked=False):
+        from ui.settings_ui import Ui_Dialog
         dialog = QDialog(self)
-        from PyQt5.uic import loadUi  # type: ignore
-        loadUi("ui/settings.ui", dialog)
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
+        ui = Ui_Dialog()
+        ui.setupUi(dialog)
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+
         # 初始化
-        precision_combo = dialog.precisionCombo
-        precision_spin = dialog.precisionSet
-        update_precision_state = lambda index: precision_spin.setEnabled(index == 5)  # 自定义项索引为5
+        precision_combo = ui.precisionCombo
+        precision_spin = ui.precisionSet
+        update_precision_state = lambda index: precision_spin.setEnabled(index == 5)
         precision_combo.currentIndexChanged.connect(update_precision_state)
         precision_combo.setCurrentIndex(self.precisionMode)
         precision_spin.setValue(self.precisionSet)
         update_precision_state(self.precisionMode)
-        dialog.checkUnusual.setChecked(self.show_unusual)
-        dialog.startDebug.setChecked(self.debug)
-        dialog.output2infoArea.setChecked(self.if_log2info)
+        ui.checkUnusual.setChecked(self.show_unusual)
+        ui.startDebug.setChecked(self.debug)
+        ui.output2infoArea.setChecked(self.if_log2info)
 
         initial_precisionMode = self.precisionMode
         initial_precisionSet = self.precisionSet
-        initial_unusual = dialog.checkUnusual.isChecked()
-        initial_debug = dialog.startDebug.isChecked()
-        initial_log = dialog.output2infoArea.isChecked()
+        initial_unusual = ui.checkUnusual.isChecked()
+        initial_debug = ui.startDebug.isChecked()
+        initial_log = ui.output2infoArea.isChecked()
 
         @catch_exceptions("重置设置选项时崩溃")
         def reset():
             yes = QMessageBox.question(dialog, "确认", "是否恢复出厂设置？", QMessageBox.Yes | QMessageBox.No)
             if yes == QMessageBox.No:
                 return
-            dialog.precisionCombo.setCurrentIndex(5)
+            ui.precisionCombo.setCurrentIndex(5)
             precision_spin.setValue(12)
             precision_spin.setEnabled(False)
-            dialog.checkUnusual.setChecked(False)
-            dialog.startDebug.setChecked(False)
-            dialog.output2infoArea.setChecked(False)
+            ui.checkUnusual.setChecked(False)
+            ui.startDebug.setChecked(False)
+            ui.output2infoArea.setChecked(False)
 
         @catch_exceptions("保存设置选项时崩溃")
         def save():
@@ -826,11 +828,11 @@ class DimCalculatorGUI(QMainWindow):
             if self.precision != precision:
                 self.core.precision = self.precision = precision
                 self.core.update_namespace()
-            show_unusual = dialog.checkUnusual.isChecked()
+            show_unusual = ui.checkUnusual.isChecked()
             if self.show_unusual != show_unusual:
                 self.show_unusual = show_unusual
                 self.update_right_buttons()
-            debug = dialog.startDebug.isChecked()
+            debug = ui.startDebug.isChecked()
             if self.debug != debug:
                 self.debug = debug
                 if debug:
@@ -838,7 +840,7 @@ class DimCalculatorGUI(QMainWindow):
                     QMessageBox.information(dialog, "调试模式", "调试模式已开启\n日志将输出到 log/DimCalculator.log")
                 else:
                     logging.getLogger().setLevel(logging.ERROR)
-            log2info = dialog.output2infoArea.isChecked()
+            log2info = ui.output2infoArea.isChecked()
             self.if_log2info = log2info
             self.update_status_label()
             if self.dump_settings():
@@ -848,23 +850,21 @@ class DimCalculatorGUI(QMainWindow):
             has_changed = (
                     precision_combo.currentIndex() != initial_precisionMode or
                     precision_spin.value() != initial_precisionSet or
-                    dialog.checkUnusual.isChecked() != initial_unusual or
-                    dialog.startDebug.isChecked() != initial_debug or
-                    dialog.output2infoArea.isChecked() != initial_log
+                    ui.checkUnusual.isChecked() != initial_unusual or
+                    ui.startDebug.isChecked() != initial_debug or
+                    ui.output2infoArea.isChecked() != initial_log
             )
             if has_changed:
-                reply = QMessageBox.question(dialog, "确认取消", "有未保存的更改，是否保存？", QMessageBox.Yes | QMessageBox.No)
+                reply = QMessageBox.question(dialog, "确认取消", "有未保存的更改，是否保存？",
+                                             QMessageBox.Yes | QMessageBox.No)
                 if reply == QMessageBox.Yes:
                     save()
                     return
             dialog.reject()
 
-        dialog.ok.clicked.connect(lambda: save())
-        dialog.cancel.clicked.connect(lambda: cancel())
-        dialog.reset.clicked.connect(lambda: reset())
-
-        # dialog.ok.setIcon(get_std_icon(QApplication.style().SP_DialogOkButton))
-        # dialog.cancel.setIcon(get_std_icon(QApplication.style().SP_DialogCancelButton))
+        ui.ok.clicked.connect(lambda: save())
+        ui.cancel.clicked.connect(lambda: cancel())
+        ui.reset.clicked.connect(lambda: reset())
 
         dialog.exec_()
 
