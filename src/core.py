@@ -166,6 +166,9 @@ class DimCalculatorCore:
                         c = exp[i]
                         if c == '(':
                             paren_depth += 1
+                            if i > 0 and exp[i-1].isalpha():  # 遇到函数：func(
+                                i = ident_start  # 不收集
+                                break
                             i += 1
                         elif c == ')':
                             paren_depth -= 1
@@ -178,7 +181,7 @@ class DimCalculatorCore:
                             i += 1
                         elif c in '/·':
                             # 遇到 / 或 · 且后面是数字时停止（如 /3A 中的 /3）。此时当前单位结束，后面的数字+单位由下一轮处理
-                            if i + 1 < n and exp[i + 1].isdigit():
+                            if i + 1 < n and exp[i+1].isdigit():
                                 break
                             i += 1
                         elif c == '^':
@@ -189,7 +192,7 @@ class DimCalculatorCore:
                             while i < n and is_digit_or_dot(exp[i]):
                                 i += 1
                         else:
-                            # 遇到其他字符（运算符、函数括号等），单位结束
+                            # 遇到其他字符（运算符等），单位结束
                             break
                     ident = exp[ident_start:i]
                     if ident:
