@@ -149,12 +149,12 @@ class DimCalculatorCore:
                 while i < n and is_digit_or_dot(exp[i]):
                     i += 1
                 # 注：不再支持 e/E 科学计数法（如 3e+2），因为在该应用场景中 e 代表自然常数或元电荷
-                # 处理 ^ 指数（如 10^-34，）
+                # 处理 ^ 指数（如 10^-34）
                 if i < n and exp[i] == '^':
                     i += 1
                     if i < n and exp[i] in '+-':
                         i += 1
-                    while i < n and exp[i].isdigit():  # todo: 循环指数
+                    while i < n and is_digit_or_dot(exp[i]):  # todo: 循环指数
                         i += 1
                 num_part = exp[start:i]
                 # 检查数字后面是否紧跟单位/常数（字母或下划线开头）
@@ -180,8 +180,8 @@ class DimCalculatorCore:
                         elif c.isalpha() or c == '_' or c.isdigit():
                             i += 1
                         elif c in '/·':
-                            # 遇到 / 或 · 且后面是数字时停止（如 /3A 中的 /3）。此时当前单位结束，后面的数字+单位由下一轮处理
-                            if i + 1 < n and exp[i+1].isdigit():
+                            # 遇到/·且后面是数字时停止（如 /3A 中的 /3）。此时当前单位结束，后面的数字单位由下一轮处理
+                            if i + 1 < n and is_digit_or_dot(exp[i+1]):
                                 break
                             i += 1
                         elif c == '^':
@@ -191,8 +191,7 @@ class DimCalculatorCore:
                                 i += 1
                             while i < n and is_digit_or_dot(exp[i]):
                                 i += 1
-                        else:
-                            # 遇到其他字符（运算符等），单位结束
+                        else:  # 遇到其他字符（运算符等），单位结束
                             break
                     ident = exp[ident_start:i]
                     if ident:
