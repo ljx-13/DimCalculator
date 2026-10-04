@@ -382,6 +382,8 @@ class DimCalculatorCore:
                     x = x.to(ureg.radian).magnitude
                 elif x.units == ureg.radian:
                     x = x.magnitude
+                elif x.dimensionless:
+                    x = x.magnitude
                 else:
                     raise TypeError(f"三角函数要求角度（deg/rad），但输入了 {x.units}")
             result = f(x)
@@ -401,7 +403,6 @@ class DimCalculatorCore:
                 if not x.dimensionless:
                     raise ValueError(f"对数log()的参数必须无量纲，但输入了 {x.units}")
                 x = x.magnitude
-            # 现在 x 是纯数字
             return math.log(x, base_)
         def sqrt(x):  # todo: free sqrt
             """开方"""

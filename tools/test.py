@@ -110,11 +110,11 @@ def run_all_tests():
 
     # ========== 9. 三角函数 ==========
     print("\n三角函数 (角度/弧度):")
-    test("sin(30*deg)", "0.5")
+    test("sin(37*deg)", "0.6")
     test("cos(60*deg)", "0.5")
     test("tan(45*deg)", "1")
     test("sin(pi/2)", "1")
-    test("cos(0)", "1")
+    test("5sin(7A/1A)", "3.2849329936")
     test("tan(pi/4)", "1")
     test("sin(pi)", "0")
 
