@@ -454,27 +454,13 @@ class DimCalculatorCore:
             u2 = str(error.units2).lower()
 
             # 辅助函数：判断单位是否属于某物理量
-            def is_length(u):
-                return 'meter' in u or u in ('m', 'cm', 'km', 'mm')
-
-            def is_time(u):
-                return 'second' in u or u in ('s', 'min', 'h')
-
-            def is_mass(u):
-                return 'kilogram' in u or u in ('kg', 'g', 'mg')
-
-            def is_energy(u):
-                return 'joule' in u or u in ('j', 'joule')
-
-            def is_power(u):
-                return 'watt' in u or u in ('w', 'watt')
-
-            def is_voltage(u):
-                return 'volt' in u or u in ('v', 'volt')
-
-            def is_current(u):
-                return 'ampere' in u or u in ('a', 'ampere')
-
+            is_length = lambda u: 'meter' in u or u in ('m', 'cm', 'km', 'mm')
+            is_time = lambda u: 'second' in u or u in ('s', 'min', 'h')
+            is_mass = lambda u: 'kilogram' in u or u in ('kg', 'g', 'mg')
+            is_energy = lambda u: 'joule' in u or u in ('j', 'joule')
+            is_power = lambda u: 'watt' in u or u in ('w', 'watt')
+            is_voltage = lambda u: 'volt' in u or u in ('v', 'volt')
+            is_current = lambda u: 'ampere' in u or u in ('a', 'ampere')
             if (is_length(u1) and is_time(u2)) or (is_length(u2) and is_time(u1)):
                 return (
                     f"❌ 单位错误：长度（米）和时间（秒）不能直接相加或相减。\n"
@@ -498,45 +484,20 @@ class DimCalculatorCore:
             else:
                 return (
                     f"❌ 单位不匹配：`{error.units1}` 与 `{error.units2}` 不属于同一物理量纲。\n"
-                    f"💡 提示：请检查表达式中的单位是否一致。例如长度只能与长度相加，速度不能与时间相加等。"
+                    f"💡 提示：请检查表达式中的单位是否匹配。例如长度只能与长度相加，速度不能与时间相加等。"
                 )
 
         # 2. 未定义的名称（NameError 或 UndefinedUnitError）
         if isinstance(error, NameError) or ('UndefinedUnitError' in err_type):
             import re
-            match = re.search(r"'([^']+)'", err_msg)
-            if match:
-                undefined = match.group(1)
-                suggestions = {
-                    'm': '米（正确写法：m）',
-                    'kg': '千克（正确写法：kg）',
-                    's': '秒（正确写法：s）',
-                    'N': '牛顿（正确写法：N）',
-                    'J': '焦耳（正确写法：J）',
-                    'W': '瓦特（正确写法：W）',
-                    'Pa': '帕斯卡（正确写法：Pa）',
-                    'V': '伏特（正确写法：V）',
-                    'A': '安培（正确写法：A）',
-                    'Ω': '欧姆（正确写法：ohm 或 Ω）',
-                    'C': '库仑（正确写法：C）',
-                    'F': '法拉（正确写法：F）',
-                    'H': '亨利（正确写法：H）',
-                    'T': '特斯拉（正确写法：T）',
-                    'Hz': '赫兹（正确写法：Hz）',
-                    'rad': '弧度（正确写法：rad）',
-                    'deg': '度（正确写法：deg）',
-                    '_g': '重力加速度（正确写法：_g，或点击常数面板的 g 按钮）',
-                    '_c': '光速（正确写法：_c）',
-                    'pi': '圆周率（正确写法：pi，或使用 π 符号）',
-                    'e': '自然常数（正确写法：e）',
-                }
-                if undefined in suggestions:
-                    return f"❌ 未定义的名称：`{undefined}`\n💡 提示：{suggestions[undefined]}"
-                else:
-                    return (
-                        f"❌ 未定义的名称：`{undefined}`\n"
-                        f"💡 提示：请检查是否使用了正确的单位（m, kg, s, N, J...）或物理常数（_g, _c, _pi...）。"
-                    )
+            # 第一个被单引号 '...' 括起来的内容
+            match_ = re.search(r"'([^']+)'", err_msg)
+            if match_:
+                undefined = match_.group(1)
+                return (
+                    f"❌ 未定义的名称：`{undefined}`\n"
+                    f"💡 提示：请检查是否使用了正确的单位（m, kg, s, N, J...）或物理常数（_g, _c, _pi...）。"
+                )
             else:
                 return f"❌ 计算错误：{err_msg}\n💡 提示：请检查是否使用了未定义的变量或单位。"
 
@@ -549,7 +510,7 @@ class DimCalculatorCore:
 
         # 4. 其他异常（如 ZeroDivisionError, OverflowError 等）
         if isinstance(error, ZeroDivisionError):
-            return "❌ 除零错误：表达式分母为零。\n💡 提示：请检查除数是否可能为零。"
+            return "❌ 计算错误：表达式分母为零。\n💡 提示：请检查除数是否可能为零。"
         if isinstance(error, OverflowError):
             return "❌ 数值溢出：计算结果过大或过小。\n💡 提示：请简化表达式或使用科学计数法。"
 
