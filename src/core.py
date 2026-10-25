@@ -435,6 +435,7 @@ class DimCalculatorCore:
         namespace['sinh'] = math.sinh
         namespace['cosh'] = math.cosh
         namespace['tanh'] = math.tanh
+        namespace['exp'] = math.exp
         return namespace
 
     def update_namespace(self):

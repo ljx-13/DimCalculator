@@ -18,9 +18,9 @@ from .core import DimCalculatorCore
 func_data = [  # （名字，描述，符号，是否常用）
     ("sin", "正弦", "sin", True), ("cos", "余弦", "cos", True), ("tan", "正切", "tan", True),
     ("cot", "余切 (1/tan)", "cot", False), ("sec", "正割 (1/cos)", "sec", False), ("csc", "余割 (1/sin)", "csc", False),
-    ("asin", "反正弦 (sin⁻¹)", "asin", True), ("acos", "反余弦 (cos⁻¹)", "acos", True), ("atan", "反正切 (tan⁻¹)", "atan", True),
+    ("asin", "反正弦 (sin⁻¹)", "asin", False), ("acos", "反余弦 (cos⁻¹)", "acos", False), ("atan", "反正切 (tan⁻¹)", "atan", False),
     ("log", "对数 log(真数, 底数)", "log", True), ("lg", "常用对数", "lg", True), ("ln", "自然对数", "ln", True),
-    ("abs", "绝对值", "|x|", True), ("mod", "取余", "取余", True), ("factorial", "阶乘", "n!", False),
+    ("abs", "绝对值", "|x|", True), ("mod", "取余", "取余", True), ("exp", "指数函数 (e^x)", "e^x", True),
     ("sinh", "双曲正弦", "sinh", False), ("cosh", "双曲余弦", "cosh", False), ("tanh", "双曲正切", "tanh", False),
 ]
 get_std_icon = QApplication.style().standardIcon
