@@ -1,3 +1,5 @@
+MAX_COLS = 8
+
 import json
 import os
 import sys
@@ -311,15 +313,8 @@ class DimCalculatorGUI(QMainWindow):
         tab_widget = self.findChild(QTabWidget)
         if not tab_widget:
             return
-        # 获取当前标签页的宽度
         tab_width = tab_widget.width() - 20
-        # 根据宽度计算列数（每个按钮约60-70px）
-        for i in range(1, 10):
-            if tab_width < 100 * i + 50:
-                new_cols = i
-                break
-        else:
-            new_cols = 10
+        new_cols = min(MAX_COLS, max(1, (tab_width + 25) // 100))  # 根据宽度计算列数（每个按钮约60-70px）
         # 更新所有面板
         self.right_tabs.setUpdatesEnabled(False)
         if hasattr(self, 'unit_buttons') and self.unit_buttons:
@@ -345,7 +340,7 @@ class DimCalculatorGUI(QMainWindow):
             available_width = 300
         # 计算按钮大小（保持正方形）
         spacing = 7
-        if available_width > 1000:
+        if available_width > MAX_COLS * 100:
             btn_size = (available_width - spacing * (cols - 1)) // cols - 20
             btn_size = max(40, btn_size)
             btn_size = min(100, btn_size)
@@ -361,7 +356,7 @@ class DimCalculatorGUI(QMainWindow):
             elif text_len >= 8:
                 font_size = max(10, btn_size // 5)
             elif text_len >= 6:
-                font_size = max(10, btn_size // 4)  # 很长时更小
+                font_size = max(10, btn_size // 4)
             elif text_len >= 4:
                 font_size = max(12, btn_size // 3)
             else:
