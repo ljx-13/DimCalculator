@@ -81,10 +81,10 @@ if __name__ == '__main__':
         # 延迟加载主窗口
         def load_main_window():
             from src.gui import DimCalculatorGUI
-            window = DimCalculatorGUI()
-            window.show()
-            splash.finish(window)
-            window.check_first_run()
+            app.main_window = DimCalculatorGUI()
+            app.main_window.show()
+            splash.finish(app.main_window)
+            app.main_window.check_first_run()
         QTimer.singleShot(0, load_main_window)
         # window = DimCalculatorGUI()
         # window.show()
